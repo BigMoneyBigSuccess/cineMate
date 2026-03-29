@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./;proto";
+
+// AuthService provides authentication-related RPC methods.
+service AuthService {
+    // ValidateToken checks the validity of a given token and returns the associated user ID if valid.
+    rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+message ValidateTokenResponse {
+    int64 user_id = 1;
+}
