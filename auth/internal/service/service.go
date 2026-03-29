@@ -5,7 +5,6 @@ import (
 
 	"github.com/BigMoneyBigSuccess/cineMate/auth/internal/repository"
 	"github.com/BigMoneyBigSuccess/cineMate/auth/internal/utils"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -43,8 +42,7 @@ func (s *AuthService) Login(email, password string) (string, error) {
 		return "", ErrUserNotFound
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	if !utils.CheckPassword(user.Password, password) {
 		return "", ErrInvalidCredentials
 	}
 
