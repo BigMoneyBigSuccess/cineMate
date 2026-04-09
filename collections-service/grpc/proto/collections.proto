@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "./;proto";
+
+// CollectionsService defines the gRPC service for managing user movie collections
+service CollectionsService {
+    // AddMovie adds a movie to the user's collection (either "watched" or "watchlist")
+  rpc AddMovie(AddMovieRequest) returns (Empty);
+    // GetCollection retrieves the user's movie collection based on the specified type
+  rpc GetCollection(GetCollectionRequest) returns (GetCollectionResponse);
+    // RemoveMovie removes a movie from the user's collection based on the specified type
+  rpc RemoveMovie(RemoveMovieRequest) returns (Empty);
+}
+
+message AddMovieRequest {
+  string user_id = 1;
+  string type = 2;
+  int64 movie_id = 3;
+  float rating = 4;
+  string review = 5;
+}
+
+message GetCollectionRequest {
+  string user_id = 1;
+  string type = 2;
+}
+
+message GetCollectionResponse {
+  repeated Movie items = 1;
+}
+
+message RemoveMovieRequest {
+  string user_id = 1;
+  string type = 2;
+  int64 movie_id = 3;
+}
+
+message Movie {
+  int64 movie_id = 1;
+  float rating = 2;
+  string review = 3;
+}
+
+message Empty {}
