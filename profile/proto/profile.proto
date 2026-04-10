@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./;proto";
+
+service ProfileService {
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+}
+
+message GetProfileRequest {
+  int64 user_id = 1;
+}
+
+message GetProfileResponse {
+  int64 user_id = 1;
+  string username = 2;
+  string name = 3;
+  string bio = 4;
+  string avatar_url = 5;
+}
+
+message UpdateProfileRequest {
+  int64 user_id = 1;
+  string username = 2;
+  string name = 3;
+  string bio = 4;
+  string avatar_url = 5;
+}
+
+message UpdateProfileResponse {
+  string message = 1;
+}
