@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./;proto";
+
+service MovieCollectionService {
+  rpc GetMovieCollections(GetMovieCollectionsRequest) returns (GetMovieCollectionsResponse);
+}
+
+message GetMovieCollectionsRequest {
+  int64 movie_id = 1;
+}
+
+message CollectionItem {
+  int64 user_id = 1;
+  string username = 2;
+  int32 rating = 3;
+  string review = 4;
+  bool watched = 5;
+}
+
+message GetMovieCollectionsResponse {
+  repeated CollectionItem items = 1;
+}
