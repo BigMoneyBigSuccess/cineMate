@@ -1,0 +1,220 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"movie_collection/internal/core/domain"
+	"movie_collection/internal/core/ports"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+)
+
+var _ ports.MovieRepository = (*MovieRepository)(nil)
+
+type MovieRepository struct {
+	db *sql.DB
+}
+
+func NewMovieRepository(db *sql.DB) *MovieRepository {
+	return &MovieRepository{db: db}
+}
+
+func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	movieID, err := resolveMovieIDForUpsert(ctx, tx, movie)
+	if err != nil {
+		return err
+	}
+	movie.MovieID = movieID
+
+	if movie.LastSyncAt.IsZero() {
+		movie.LastSyncAt = time.Now().UTC()
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		`INSERT INTO movies (
+			id,
+			title,
+			country,
+			release_year,
+			imdb_rating,
+			source,
+			source_movie_id,
+			last_sync_at,
+			archived_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title,
+			country = EXCLUDED.country,
+			release_year = EXCLUDED.release_year,
+			imdb_rating = EXCLUDED.imdb_rating,
+			source = EXCLUDED.source,
+			source_movie_id = EXCLUDED.source_movie_id,
+			last_sync_at = EXCLUDED.last_sync_at,
+			archived_at = NULL`,
+		movie.MovieID,
+		movie.Title,
+		movie.Country,
+		movie.ReleaseYear,
+		movie.IMDbRating,
+		movie.Source,
+		movie.SourceMovieID,
+		movie.LastSyncAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	if err := r.replaceGenres(ctx, tx, movie.MovieID, movie.Genres); err != nil {
+		return err
+	}
+	if err := r.replacePeople(ctx, tx, "movie_actors", movie.MovieID, movie.Actors); err != nil {
+		return err
+	}
+	if err := r.replacePeople(ctx, tx, "movie_directors", movie.MovieID, movie.Directors); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (r *MovieRepository) ArchiveMovie(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		`UPDATE movies
+		SET archived_at = COALESCE(archived_at, now())
+		WHERE id = $1`,
+		id,
+	)
+	return err
+}
+
+func (r *MovieRepository) RemoveMovie(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `DELETE FROM movies WHERE id = $1`, id)
+	return err
+}
+
+func (r *MovieRepository) GetMovieByID(ctx context.Context, id uuid.UUID) (*domain.Movie, error) {
+	query := baseMovieSelectQuery() + `
+WHERE m.id = $1
+  AND m.archived_at IS NULL`
+
+	rows, err := r.db.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	movies, err := scanMovies(rows)
+	if err != nil {
+		return nil, err
+	}
+	if len(movies) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	return &movies[0], nil
+}
+
+func (r *MovieRepository) List(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
+	var (
+		args    []any
+		clauses []string
+	)
+
+	addArg := func(value any) string {
+		args = append(args, value)
+		return fmt.Sprintf("$%d", len(args))
+	}
+
+	if !filter.IncludeArchived {
+		clauses = append(clauses, "m.archived_at IS NULL")
+	}
+
+	if filter.Query != "" {
+		titlePlaceholder := addArg("%" + filter.Query + "%")
+		actorsPlaceholder := addArg("%" + filter.Query + "%")
+		directorsPlaceholder := addArg("%" + filter.Query + "%")
+
+		clauses = append(clauses, fmt.Sprintf(`(
+	m.title ILIKE %s
+	OR EXISTS (
+		SELECT 1
+		FROM movie_actors ma
+		JOIN persons p ON p.id = ma.person_id
+		WHERE ma.movie_id = m.id
+		  AND %s ILIKE %s
+	)
+	OR EXISTS (
+		SELECT 1
+		FROM movie_directors md
+		JOIN persons p ON p.id = md.person_id
+		WHERE md.movie_id = m.id
+		  AND %s ILIKE %s
+	)
+)`, titlePlaceholder, personDisplayNameExpr("p"), actorsPlaceholder, personDisplayNameExpr("p"), directorsPlaceholder))
+	}
+
+	if clause := buildGenreFilterClause(filter.Genres, addArg); clause != "" {
+		clauses = append(clauses, clause)
+	}
+	if clause := buildPersonFilterClause("movie_actors", "ma", filter.Actors, addArg); clause != "" {
+		clauses = append(clauses, clause)
+	}
+	if clause := buildPersonFilterClause("movie_directors", "md", filter.Directors, addArg); clause != "" {
+		clauses = append(clauses, clause)
+	}
+	if filter.Country != nil {
+		clauses = append(clauses, fmt.Sprintf("m.country = %s", addArg(*filter.Country)))
+	}
+	if filter.ReleaseYearFrom != nil {
+		clauses = append(clauses, fmt.Sprintf("m.release_year >= %s", addArg(*filter.ReleaseYearFrom)))
+	}
+	if filter.ReleaseYearTo != nil {
+		clauses = append(clauses, fmt.Sprintf("m.release_year <= %s", addArg(*filter.ReleaseYearTo)))
+	}
+	if filter.IMDbRatingFrom != nil {
+		clauses = append(clauses, fmt.Sprintf("m.imdb_rating >= %s", addArg(*filter.IMDbRatingFrom)))
+	}
+	if filter.IMDbRatingTo != nil {
+		clauses = append(clauses, fmt.Sprintf("m.imdb_rating <= %s", addArg(*filter.IMDbRatingTo)))
+	}
+
+	query := baseMovieSelectQuery()
+	if len(clauses) > 0 {
+		query += "\nWHERE " + strings.Join(clauses, "\n  AND ")
+	}
+
+	query += "\n" + buildMovieOrderBy(filter.SortBy, filter.SortOrder)
+
+	var pagination []string
+	if filter.Limit > 0 {
+		pagination = append(pagination, fmt.Sprintf("LIMIT %s", addArg(filter.Limit)))
+	}
+	if filter.Offset > 0 {
+		pagination = append(pagination, fmt.Sprintf("OFFSET %s", addArg(filter.Offset)))
+	}
+	if len(pagination) > 0 {
+		query += "\n" + strings.Join(pagination, " ")
+	}
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanMovies(rows)
+}
