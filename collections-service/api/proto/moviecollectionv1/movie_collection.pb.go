@@ -27,16 +27,17 @@ type Movie struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MovieId       string                 `protobuf:"bytes,1,opt,name=movie_id,json=movieId,proto3" json:"movie_id,omitempty"`
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Genres        []string               `protobuf:"bytes,3,rep,name=genres,proto3" json:"genres,omitempty"`
-	Actors        []string               `protobuf:"bytes,4,rep,name=actors,proto3" json:"actors,omitempty"`
-	Directors     []string               `protobuf:"bytes,5,rep,name=directors,proto3" json:"directors,omitempty"`
-	Country       string                 `protobuf:"bytes,6,opt,name=country,proto3" json:"country,omitempty"`
-	ReleaseYear   int32                  `protobuf:"varint,7,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
-	ImdbRating    float32                `protobuf:"fixed32,8,opt,name=imdb_rating,json=imdbRating,proto3" json:"imdb_rating,omitempty"`
-	Source        string                 `protobuf:"bytes,9,opt,name=source,proto3" json:"source,omitempty"`
-	SourceMovieId string                 `protobuf:"bytes,10,opt,name=source_movie_id,json=sourceMovieId,proto3" json:"source_movie_id,omitempty"`
-	LastSyncAt    *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_sync_at,json=lastSyncAt,proto3" json:"last_sync_at,omitempty"`
-	ArchivedAt    *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Genres        []*Genre               `protobuf:"bytes,4,rep,name=genres,proto3" json:"genres,omitempty"`
+	Actors        []*Person              `protobuf:"bytes,5,rep,name=actors,proto3" json:"actors,omitempty"`
+	Directors     []*Person              `protobuf:"bytes,6,rep,name=directors,proto3" json:"directors,omitempty"`
+	Country       string                 `protobuf:"bytes,7,opt,name=country,proto3" json:"country,omitempty"`
+	ReleaseYear   int32                  `protobuf:"varint,8,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
+	ImdbRating    float32                `protobuf:"fixed32,9,opt,name=imdb_rating,json=imdbRating,proto3" json:"imdb_rating,omitempty"`
+	Source        string                 `protobuf:"bytes,10,opt,name=source,proto3" json:"source,omitempty"`
+	SourceMovieId string                 `protobuf:"bytes,11,opt,name=source_movie_id,json=sourceMovieId,proto3" json:"source_movie_id,omitempty"`
+	LastSyncAt    *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=last_sync_at,json=lastSyncAt,proto3" json:"last_sync_at,omitempty"`
+	ArchivedAt    *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -85,21 +86,28 @@ func (x *Movie) GetTitle() string {
 	return ""
 }
 
-func (x *Movie) GetGenres() []string {
+func (x *Movie) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Movie) GetGenres() []*Genre {
 	if x != nil {
 		return x.Genres
 	}
 	return nil
 }
 
-func (x *Movie) GetActors() []string {
+func (x *Movie) GetActors() []*Person {
 	if x != nil {
 		return x.Actors
 	}
 	return nil
 }
 
-func (x *Movie) GetDirectors() []string {
+func (x *Movie) GetDirectors() []*Person {
 	if x != nil {
 		return x.Directors
 	}
@@ -155,7 +163,7 @@ func (x *Movie) GetArchivedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type GenreFilter struct {
+type Genre struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -163,20 +171,20 @@ type GenreFilter struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GenreFilter) Reset() {
-	*x = GenreFilter{}
+func (x *Genre) Reset() {
+	*x = Genre{}
 	mi := &file_api_proto_movie_collection_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GenreFilter) String() string {
+func (x *Genre) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GenreFilter) ProtoMessage() {}
+func (*Genre) ProtoMessage() {}
 
-func (x *GenreFilter) ProtoReflect() protoreflect.Message {
+func (x *Genre) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_movie_collection_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -188,26 +196,26 @@ func (x *GenreFilter) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GenreFilter.ProtoReflect.Descriptor instead.
-func (*GenreFilter) Descriptor() ([]byte, []int) {
+// Deprecated: Use Genre.ProtoReflect.Descriptor instead.
+func (*Genre) Descriptor() ([]byte, []int) {
 	return file_api_proto_movie_collection_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GenreFilter) GetId() string {
+func (x *Genre) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *GenreFilter) GetName() string {
+func (x *Genre) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-type PersonFilter struct {
+type Person struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
@@ -217,20 +225,20 @@ type PersonFilter struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PersonFilter) Reset() {
-	*x = PersonFilter{}
+func (x *Person) Reset() {
+	*x = Person{}
 	mi := &file_api_proto_movie_collection_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PersonFilter) String() string {
+func (x *Person) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PersonFilter) ProtoMessage() {}
+func (*Person) ProtoMessage() {}
 
-func (x *PersonFilter) ProtoReflect() protoreflect.Message {
+func (x *Person) ProtoReflect() protoreflect.Message {
 	mi := &file_api_proto_movie_collection_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -242,33 +250,33 @@ func (x *PersonFilter) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PersonFilter.ProtoReflect.Descriptor instead.
-func (*PersonFilter) Descriptor() ([]byte, []int) {
+// Deprecated: Use Person.ProtoReflect.Descriptor instead.
+func (*Person) Descriptor() ([]byte, []int) {
 	return file_api_proto_movie_collection_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PersonFilter) GetId() string {
+func (x *Person) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *PersonFilter) GetName() string {
+func (x *Person) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *PersonFilter) GetSurname() string {
+func (x *Person) GetSurname() string {
 	if x != nil {
 		return x.Surname
 	}
 	return ""
 }
 
-func (x *PersonFilter) GetBirthYear() int32 {
+func (x *Person) GetBirthYear() int32 {
 	if x != nil && x.BirthYear != nil {
 		return *x.BirthYear
 	}
@@ -366,9 +374,9 @@ func (x *GetMovieByIDResponse) GetMovie() *Movie {
 type ListMoviesRequest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	Query           string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	Genres          []*GenreFilter         `protobuf:"bytes,2,rep,name=genres,proto3" json:"genres,omitempty"`
-	Actors          []*PersonFilter        `protobuf:"bytes,3,rep,name=actors,proto3" json:"actors,omitempty"`
-	Directors       []*PersonFilter        `protobuf:"bytes,4,rep,name=directors,proto3" json:"directors,omitempty"`
+	Genres          []*Genre               `protobuf:"bytes,2,rep,name=genres,proto3" json:"genres,omitempty"`
+	Actors          []*Person              `protobuf:"bytes,3,rep,name=actors,proto3" json:"actors,omitempty"`
+	Directors       []*Person              `protobuf:"bytes,4,rep,name=directors,proto3" json:"directors,omitempty"`
 	Country         *string                `protobuf:"bytes,5,opt,name=country,proto3,oneof" json:"country,omitempty"`
 	ReleaseYearFrom *int32                 `protobuf:"varint,6,opt,name=release_year_from,json=releaseYearFrom,proto3,oneof" json:"release_year_from,omitempty"`
 	ReleaseYearTo   *int32                 `protobuf:"varint,7,opt,name=release_year_to,json=releaseYearTo,proto3,oneof" json:"release_year_to,omitempty"`
@@ -420,21 +428,21 @@ func (x *ListMoviesRequest) GetQuery() string {
 	return ""
 }
 
-func (x *ListMoviesRequest) GetGenres() []*GenreFilter {
+func (x *ListMoviesRequest) GetGenres() []*Genre {
 	if x != nil {
 		return x.Genres
 	}
 	return nil
 }
 
-func (x *ListMoviesRequest) GetActors() []*PersonFilter {
+func (x *ListMoviesRequest) GetActors() []*Person {
 	if x != nil {
 		return x.Actors
 	}
 	return nil
 }
 
-func (x *ListMoviesRequest) GetDirectors() []*PersonFilter {
+func (x *ListMoviesRequest) GetDirectors() []*Person {
 	if x != nil {
 		return x.Directors
 	}
@@ -883,28 +891,29 @@ var File_api_proto_movie_collection_proto protoreflect.FileDescriptor
 
 const file_api_proto_movie_collection_proto_rawDesc = "" +
 	"\n" +
-	" api/proto/movie_collection.proto\x12\x12moviecollection.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x9f\x03\n" +
+	" api/proto/movie_collection.proto\x12\x12moviecollection.v1\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x94\x04\n" +
 	"\x05Movie\x12\x19\n" +
 	"\bmovie_id\x18\x01 \x01(\tR\amovieId\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12\x16\n" +
-	"\x06genres\x18\x03 \x03(\tR\x06genres\x12\x16\n" +
-	"\x06actors\x18\x04 \x03(\tR\x06actors\x12\x1c\n" +
-	"\tdirectors\x18\x05 \x03(\tR\tdirectors\x12\x18\n" +
-	"\acountry\x18\x06 \x01(\tR\acountry\x12!\n" +
-	"\frelease_year\x18\a \x01(\x05R\vreleaseYear\x12\x1f\n" +
-	"\vimdb_rating\x18\b \x01(\x02R\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x121\n" +
+	"\x06genres\x18\x04 \x03(\v2\x19.moviecollection.v1.GenreR\x06genres\x122\n" +
+	"\x06actors\x18\x05 \x03(\v2\x1a.moviecollection.v1.PersonR\x06actors\x128\n" +
+	"\tdirectors\x18\x06 \x03(\v2\x1a.moviecollection.v1.PersonR\tdirectors\x12\x18\n" +
+	"\acountry\x18\a \x01(\tR\acountry\x12!\n" +
+	"\frelease_year\x18\b \x01(\x05R\vreleaseYear\x12\x1f\n" +
+	"\vimdb_rating\x18\t \x01(\x02R\n" +
 	"imdbRating\x12\x16\n" +
-	"\x06source\x18\t \x01(\tR\x06source\x12&\n" +
-	"\x0fsource_movie_id\x18\n" +
-	" \x01(\tR\rsourceMovieId\x12<\n" +
-	"\flast_sync_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"\x06source\x18\n" +
+	" \x01(\tR\x06source\x12&\n" +
+	"\x0fsource_movie_id\x18\v \x01(\tR\rsourceMovieId\x12<\n" +
+	"\flast_sync_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSyncAt\x12;\n" +
-	"\varchived_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"archivedAt\"1\n" +
-	"\vGenreFilter\x12\x0e\n" +
+	"\varchived_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"archivedAt\"+\n" +
+	"\x05Genre\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"\x7f\n" +
-	"\fPersonFilter\x12\x0e\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"y\n" +
+	"\x06Person\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
 	"\asurname\x18\x03 \x01(\tR\asurname\x12\"\n" +
@@ -914,12 +923,12 @@ const file_api_proto_movie_collection_proto_rawDesc = "" +
 	"\x13GetMovieByIDRequest\x12\x19\n" +
 	"\bmovie_id\x18\x01 \x01(\tR\amovieId\"G\n" +
 	"\x14GetMovieByIDResponse\x12/\n" +
-	"\x05movie\x18\x01 \x01(\v2\x19.moviecollection.v1.MovieR\x05movie\"\xa2\x05\n" +
+	"\x05movie\x18\x01 \x01(\v2\x19.moviecollection.v1.MovieR\x05movie\"\x90\x05\n" +
 	"\x11ListMoviesRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\x127\n" +
-	"\x06genres\x18\x02 \x03(\v2\x1f.moviecollection.v1.GenreFilterR\x06genres\x128\n" +
-	"\x06actors\x18\x03 \x03(\v2 .moviecollection.v1.PersonFilterR\x06actors\x12>\n" +
-	"\tdirectors\x18\x04 \x03(\v2 .moviecollection.v1.PersonFilterR\tdirectors\x12\x1d\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x121\n" +
+	"\x06genres\x18\x02 \x03(\v2\x19.moviecollection.v1.GenreR\x06genres\x122\n" +
+	"\x06actors\x18\x03 \x03(\v2\x1a.moviecollection.v1.PersonR\x06actors\x128\n" +
+	"\tdirectors\x18\x04 \x03(\v2\x1a.moviecollection.v1.PersonR\tdirectors\x12\x1d\n" +
 	"\acountry\x18\x05 \x01(\tH\x00R\acountry\x88\x01\x01\x12/\n" +
 	"\x11release_year_from\x18\x06 \x01(\x05H\x01R\x0freleaseYearFrom\x88\x01\x01\x12+\n" +
 	"\x0frelease_year_to\x18\a \x01(\x05H\x02R\rreleaseYearTo\x88\x01\x01\x12-\n" +
@@ -984,8 +993,8 @@ func file_api_proto_movie_collection_proto_rawDescGZIP() []byte {
 var file_api_proto_movie_collection_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_api_proto_movie_collection_proto_goTypes = []any{
 	(*Movie)(nil),                           // 0: moviecollection.v1.Movie
-	(*GenreFilter)(nil),                     // 1: moviecollection.v1.GenreFilter
-	(*PersonFilter)(nil),                    // 2: moviecollection.v1.PersonFilter
+	(*Genre)(nil),                           // 1: moviecollection.v1.Genre
+	(*Person)(nil),                          // 2: moviecollection.v1.Person
 	(*GetMovieByIDRequest)(nil),             // 3: moviecollection.v1.GetMovieByIDRequest
 	(*GetMovieByIDResponse)(nil),            // 4: moviecollection.v1.GetMovieByIDResponse
 	(*ListMoviesRequest)(nil),               // 5: moviecollection.v1.ListMoviesRequest
@@ -1001,36 +1010,39 @@ var file_api_proto_movie_collection_proto_goTypes = []any{
 	(*emptypb.Empty)(nil),                   // 15: google.protobuf.Empty
 }
 var file_api_proto_movie_collection_proto_depIdxs = []int32{
-	14, // 0: moviecollection.v1.Movie.last_sync_at:type_name -> google.protobuf.Timestamp
-	14, // 1: moviecollection.v1.Movie.archived_at:type_name -> google.protobuf.Timestamp
-	0,  // 2: moviecollection.v1.GetMovieByIDResponse.movie:type_name -> moviecollection.v1.Movie
-	1,  // 3: moviecollection.v1.ListMoviesRequest.genres:type_name -> moviecollection.v1.GenreFilter
-	2,  // 4: moviecollection.v1.ListMoviesRequest.actors:type_name -> moviecollection.v1.PersonFilter
-	2,  // 5: moviecollection.v1.ListMoviesRequest.directors:type_name -> moviecollection.v1.PersonFilter
-	0,  // 6: moviecollection.v1.ListMoviesResponse.movies:type_name -> moviecollection.v1.Movie
-	0,  // 7: moviecollection.v1.UpsertMovieRequest.movie:type_name -> moviecollection.v1.Movie
-	0,  // 8: moviecollection.v1.GetWatchlistResponse.movies:type_name -> moviecollection.v1.Movie
-	3,  // 9: moviecollection.v1.MovieCatalogService.GetMovieByID:input_type -> moviecollection.v1.GetMovieByIDRequest
-	5,  // 10: moviecollection.v1.MovieCatalogService.ListMovies:input_type -> moviecollection.v1.ListMoviesRequest
-	7,  // 11: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:input_type -> moviecollection.v1.UpsertMovieRequest
-	8,  // 12: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:input_type -> moviecollection.v1.ArchiveMovieRequest
-	9,  // 13: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:input_type -> moviecollection.v1.RemoveMovieRequest
-	10, // 14: moviecollection.v1.WatchlistService.AddMovieToWatchlist:input_type -> moviecollection.v1.AddMovieToWatchlistRequest
-	11, // 15: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:input_type -> moviecollection.v1.RemoveMovieFromWatchlistRequest
-	12, // 16: moviecollection.v1.WatchlistService.GetWatchlist:input_type -> moviecollection.v1.GetWatchlistRequest
-	4,  // 17: moviecollection.v1.MovieCatalogService.GetMovieByID:output_type -> moviecollection.v1.GetMovieByIDResponse
-	6,  // 18: moviecollection.v1.MovieCatalogService.ListMovies:output_type -> moviecollection.v1.ListMoviesResponse
-	15, // 19: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:output_type -> google.protobuf.Empty
-	15, // 20: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:output_type -> google.protobuf.Empty
-	15, // 21: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:output_type -> google.protobuf.Empty
-	15, // 22: moviecollection.v1.WatchlistService.AddMovieToWatchlist:output_type -> google.protobuf.Empty
-	15, // 23: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:output_type -> google.protobuf.Empty
-	13, // 24: moviecollection.v1.WatchlistService.GetWatchlist:output_type -> moviecollection.v1.GetWatchlistResponse
-	17, // [17:25] is the sub-list for method output_type
-	9,  // [9:17] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	1,  // 0: moviecollection.v1.Movie.genres:type_name -> moviecollection.v1.Genre
+	2,  // 1: moviecollection.v1.Movie.actors:type_name -> moviecollection.v1.Person
+	2,  // 2: moviecollection.v1.Movie.directors:type_name -> moviecollection.v1.Person
+	14, // 3: moviecollection.v1.Movie.last_sync_at:type_name -> google.protobuf.Timestamp
+	14, // 4: moviecollection.v1.Movie.archived_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: moviecollection.v1.GetMovieByIDResponse.movie:type_name -> moviecollection.v1.Movie
+	1,  // 6: moviecollection.v1.ListMoviesRequest.genres:type_name -> moviecollection.v1.Genre
+	2,  // 7: moviecollection.v1.ListMoviesRequest.actors:type_name -> moviecollection.v1.Person
+	2,  // 8: moviecollection.v1.ListMoviesRequest.directors:type_name -> moviecollection.v1.Person
+	0,  // 9: moviecollection.v1.ListMoviesResponse.movies:type_name -> moviecollection.v1.Movie
+	0,  // 10: moviecollection.v1.UpsertMovieRequest.movie:type_name -> moviecollection.v1.Movie
+	0,  // 11: moviecollection.v1.GetWatchlistResponse.movies:type_name -> moviecollection.v1.Movie
+	3,  // 12: moviecollection.v1.MovieCatalogService.GetMovieByID:input_type -> moviecollection.v1.GetMovieByIDRequest
+	5,  // 13: moviecollection.v1.MovieCatalogService.ListMovies:input_type -> moviecollection.v1.ListMoviesRequest
+	7,  // 14: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:input_type -> moviecollection.v1.UpsertMovieRequest
+	8,  // 15: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:input_type -> moviecollection.v1.ArchiveMovieRequest
+	9,  // 16: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:input_type -> moviecollection.v1.RemoveMovieRequest
+	10, // 17: moviecollection.v1.WatchlistService.AddMovieToWatchlist:input_type -> moviecollection.v1.AddMovieToWatchlistRequest
+	11, // 18: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:input_type -> moviecollection.v1.RemoveMovieFromWatchlistRequest
+	12, // 19: moviecollection.v1.WatchlistService.GetWatchlist:input_type -> moviecollection.v1.GetWatchlistRequest
+	4,  // 20: moviecollection.v1.MovieCatalogService.GetMovieByID:output_type -> moviecollection.v1.GetMovieByIDResponse
+	6,  // 21: moviecollection.v1.MovieCatalogService.ListMovies:output_type -> moviecollection.v1.ListMoviesResponse
+	15, // 22: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:output_type -> google.protobuf.Empty
+	15, // 23: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:output_type -> google.protobuf.Empty
+	15, // 24: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:output_type -> google.protobuf.Empty
+	15, // 25: moviecollection.v1.WatchlistService.AddMovieToWatchlist:output_type -> google.protobuf.Empty
+	15, // 26: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:output_type -> google.protobuf.Empty
+	13, // 27: moviecollection.v1.WatchlistService.GetWatchlist:output_type -> moviecollection.v1.GetWatchlistResponse
+	20, // [20:28] is the sub-list for method output_type
+	12, // [12:20] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_movie_collection_proto_init() }

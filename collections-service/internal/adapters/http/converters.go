@@ -52,26 +52,9 @@ func listRequestToFilter(req *moviecollectionv1.ListMoviesRequest) (ports.MovieF
 		return ports.MovieFilter{}, status.Error(codes.InvalidArgument, "imdb_rating_from must be less than or equal to imdb_rating_to")
 	}
 
-	genres := make([]domain.Genre, 0, len(req.GetGenres()))
-	for _, genre := range req.GetGenres() {
-		if genre == nil {
-			continue
-		}
-
-		mapped := domain.Genre{Name: strings.TrimSpace(genre.GetName())}
-		if genre.GetId() != "" {
-			genreID, err := parseUUID(genre.GetId(), "genres.id")
-			if err != nil {
-				return ports.MovieFilter{}, err
-			}
-			mapped.ID = genreID
-		}
-
-		if mapped.ID == uuid.Nil && mapped.Name == "" {
-			continue
-		}
-
-		genres = append(genres, mapped)
+	genres, err := protoGenresToDomain(req.GetGenres(), "genres")
+	if err != nil {
+		return ports.MovieFilter{}, err
 	}
 	filter.Genres = genres
 
@@ -90,7 +73,34 @@ func listRequestToFilter(req *moviecollectionv1.ListMoviesRequest) (ports.MovieF
 	return filter, nil
 }
 
-func protoPeopleToDomain(people []*moviecollectionv1.PersonFilter, field string) ([]domain.Person, error) {
+func protoGenresToDomain(genres []*moviecollectionv1.Genre, field string) ([]domain.Genre, error) {
+	result := make([]domain.Genre, 0, len(genres))
+
+	for _, genre := range genres {
+		if genre == nil {
+			continue
+		}
+
+		mapped := domain.Genre{Name: strings.TrimSpace(genre.GetName())}
+		if genre.GetId() != "" {
+			genreID, err := parseUUID(genre.GetId(), field+".id")
+			if err != nil {
+				return nil, err
+			}
+			mapped.ID = genreID
+		}
+
+		if mapped.ID == uuid.Nil && mapped.Name == "" {
+			continue
+		}
+
+		result = append(result, mapped)
+	}
+
+	return result, nil
+}
+
+func protoPeopleToDomain(people []*moviecollectionv1.Person, field string) ([]domain.Person, error) {
 	result := make([]domain.Person, 0, len(people))
 
 	for _, person := range people {
@@ -123,6 +133,51 @@ func protoPeopleToDomain(people []*moviecollectionv1.PersonFilter, field string)
 	return result, nil
 }
 
+func genresToProto(genres []domain.Genre) []*moviecollectionv1.Genre {
+	result := make([]*moviecollectionv1.Genre, 0, len(genres))
+
+	for _, genre := range genres {
+		mapped := &moviecollectionv1.Genre{
+			Name: strings.TrimSpace(genre.Name),
+		}
+		if genre.ID != uuid.Nil {
+			mapped.Id = genre.ID.String()
+		}
+		if mapped.Id == "" && mapped.Name == "" {
+			continue
+		}
+
+		result = append(result, mapped)
+	}
+
+	return result
+}
+
+func peopleToProto(people []domain.Person) []*moviecollectionv1.Person {
+	result := make([]*moviecollectionv1.Person, 0, len(people))
+
+	for _, person := range people {
+		mapped := &moviecollectionv1.Person{
+			Name:    strings.TrimSpace(person.Name),
+			Surname: strings.TrimSpace(person.Surname),
+		}
+		if person.ID != uuid.Nil {
+			mapped.Id = person.ID.String()
+		}
+		if person.BirthYear > 0 {
+			birthYear := person.BirthYear
+			mapped.BirthYear = &birthYear
+		}
+		if mapped.Id == "" && mapped.Name == "" && mapped.Surname == "" && mapped.BirthYear == nil {
+			continue
+		}
+
+		result = append(result, mapped)
+	}
+
+	return result
+}
+
 func protoToMovie(movie *moviecollectionv1.Movie) (domain.Movie, error) {
 	var mapped domain.Movie
 
@@ -147,12 +202,26 @@ func protoToMovie(movie *moviecollectionv1.Movie) (domain.Movie, error) {
 		return domain.Movie{}, err
 	}
 
+	genres, err := protoGenresToDomain(movie.GetGenres(), "movie.genres")
+	if err != nil {
+		return domain.Movie{}, err
+	}
+	actors, err := protoPeopleToDomain(movie.GetActors(), "movie.actors")
+	if err != nil {
+		return domain.Movie{}, err
+	}
+	directors, err := protoPeopleToDomain(movie.GetDirectors(), "movie.directors")
+	if err != nil {
+		return domain.Movie{}, err
+	}
+
 	mapped = domain.Movie{
 		MovieID:       mapped.MovieID,
 		Title:         strings.TrimSpace(movie.GetTitle()),
-		Genres:        normalizeStrings(movie.GetGenres()),
-		Actors:        normalizeStrings(movie.GetActors()),
-		Directors:     normalizeStrings(movie.GetDirectors()),
+		Description:   strings.TrimSpace(movie.GetDescription()),
+		Genres:        genres,
+		Actors:        actors,
+		Directors:     directors,
 		Country:       strings.TrimSpace(movie.GetCountry()),
 		ReleaseYear:   movie.GetReleaseYear(),
 		IMDbRating:    movie.GetImdbRating(),
@@ -169,9 +238,10 @@ func movieToProto(movie domain.Movie) *moviecollectionv1.Movie {
 	return &moviecollectionv1.Movie{
 		MovieId:       movie.MovieID.String(),
 		Title:         movie.Title,
-		Genres:        append([]string(nil), movie.Genres...),
-		Actors:        append([]string(nil), movie.Actors...),
-		Directors:     append([]string(nil), movie.Directors...),
+		Description:   movie.Description,
+		Genres:        genresToProto(movie.Genres),
+		Actors:        peopleToProto(movie.Actors),
+		Directors:     peopleToProto(movie.Directors),
 		Country:       movie.Country,
 		ReleaseYear:   movie.ReleaseYear,
 		ImdbRating:    movie.IMDbRating,

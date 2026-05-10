@@ -1,6 +1,10 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"strings"
+
+	"github.com/google/uuid"
+)
 
 type Genre struct {
 	ID   uuid.UUID `json:"id"`
@@ -8,10 +12,7 @@ type Genre struct {
 }
 
 func (g Genre) Validate() error {
-	if val, err := g.ID.Value(); err != nil || val == nil {
-		return ErrInvalidGenre
-	}
-	if g.Name == "" {
+	if g.ID == uuid.Nil && strings.TrimSpace(g.Name) == "" {
 		return ErrInvalidGenre
 	}
 	return nil
