@@ -10,9 +10,10 @@ import (
 type Movie struct {
 	MovieID       uuid.UUID  `json:"movie_id"`
 	Title         string     `json:"title"`
-	Genres        []string   `json:"genres"`
-	Actors        []string   `json:"actors"`
-	Directors     []string   `json:"directors"`
+	Description   string     `json:"description"`
+	Genres        []Genre    `json:"genres"`
+	Actors        []Person   `json:"actors"`
+	Directors     []Person   `json:"directors"`
 	Country       string     `json:"country"`
 	ReleaseYear   int32      `json:"release_year"`
 	IMDbRating    float32    `json:"imdb_rating"`
@@ -23,11 +24,6 @@ type Movie struct {
 }
 
 func (m Movie) Validate() error {
-	if m.MovieID != uuid.Nil {
-		if _, err := m.MovieID.Value(); err != nil {
-			return ErrInvalidMovie
-		}
-	}
 	if strings.TrimSpace(m.Title) == "" || strings.TrimSpace(m.Country) == "" {
 		return ErrInvalidMovie
 	}
@@ -42,6 +38,21 @@ func (m Movie) Validate() error {
 	}
 	if m.IMDbRating < 0 || m.IMDbRating > 10 {
 		return ErrInvalidMovie
+	}
+	for _, genre := range m.Genres {
+		if err := genre.Validate(); err != nil {
+			return ErrInvalidMovie
+		}
+	}
+	for _, actor := range m.Actors {
+		if err := actor.Validate(); err != nil {
+			return ErrInvalidMovie
+		}
+	}
+	for _, director := range m.Directors {
+		if err := director.Validate(); err != nil {
+			return ErrInvalidMovie
+		}
 	}
 	return nil
 }

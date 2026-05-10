@@ -46,6 +46,7 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 		`INSERT INTO movies (
 			id,
 			title,
+			description,
 			country,
 			release_year,
 			imdb_rating,
@@ -54,9 +55,10 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 			last_sync_at,
 			archived_at
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
 		ON CONFLICT (id) DO UPDATE SET
 			title = EXCLUDED.title,
+			description = EXCLUDED.description,
 			country = EXCLUDED.country,
 			release_year = EXCLUDED.release_year,
 			imdb_rating = EXCLUDED.imdb_rating,
@@ -66,6 +68,7 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 			archived_at = NULL`,
 		movie.MovieID,
 		movie.Title,
+		movie.Description,
 		movie.Country,
 		movie.ReleaseYear,
 		movie.IMDbRating,

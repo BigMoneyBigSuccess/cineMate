@@ -1,26 +1,24 @@
 package domain
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Person struct {
-	ID        uuid.UUID
-	Name      string
-	Surname   string
-	BirthYear int32
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Surname   string    `json:"surname"`
+	BirthYear int32     `json:"birth_year"`
 }
 
 func (p Person) Validate() error {
-	if val, err := p.ID.Value(); err != nil || val == nil {
+	if p.ID == uuid.Nil && (strings.TrimSpace(p.Name) == "" || strings.TrimSpace(p.Surname) == "") {
 		return ErrInvalidPerson
 	}
-	if p.Name == "" || p.Surname == "" {
-		return ErrInvalidPerson
-	}
-	if p.BirthYear < 1800 || p.BirthYear > int32(time.Now().Year()) {
+	if p.BirthYear != 0 && (p.BirthYear < 1800 || p.BirthYear > int32(time.Now().Year())) {
 		return ErrInvalidPerson
 	}
 	return nil

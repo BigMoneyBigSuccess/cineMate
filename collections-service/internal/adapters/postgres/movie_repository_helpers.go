@@ -63,13 +63,17 @@ WHERE m.id IN (%s)
 	return result, nil
 }
 
-func (r *MovieRepository) replaceGenres(ctx context.Context, tx *sql.Tx, movieID uuid.UUID, genres []string) error {
+func (r *MovieRepository) replaceGenres(ctx context.Context, tx *sql.Tx, movieID uuid.UUID, genres []domain.Genre) error {
 	if _, err := tx.ExecContext(ctx, `DELETE FROM movie_genres WHERE movie_id = $1`, movieID); err != nil {
 		return err
 	}
 
-	for _, genreName := range genres {
-		genreID, err := ensureGenre(ctx, tx, genreName)
+	for _, genre := range genres {
+		if genre.ID == uuid.Nil && strings.TrimSpace(genre.Name) == "" {
+			continue
+		}
+
+		genreID, err := ensureGenre(ctx, tx, genre)
 		if err != nil {
 			return err
 		}
@@ -89,13 +93,17 @@ func (r *MovieRepository) replaceGenres(ctx context.Context, tx *sql.Tx, movieID
 	return nil
 }
 
-func (r *MovieRepository) replacePeople(ctx context.Context, tx *sql.Tx, table string, movieID uuid.UUID, people []string) error {
+func (r *MovieRepository) replacePeople(ctx context.Context, tx *sql.Tx, table string, movieID uuid.UUID, people []domain.Person) error {
 	if _, err := tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s WHERE movie_id = $1`, table), movieID); err != nil {
 		return err
 	}
 
-	for _, fullName := range people {
-		personID, err := ensurePerson(ctx, tx, fullName)
+	for _, person := range people {
+		if person.ID == uuid.Nil && strings.TrimSpace(person.Name) == "" && strings.TrimSpace(person.Surname) == "" && person.BirthYear == 0 {
+			continue
+		}
+
+		personID, err := ensurePerson(ctx, tx, person)
 		if err != nil {
 			return err
 		}
@@ -151,7 +159,23 @@ func findMovieIDBySource(ctx context.Context, tx *sql.Tx, source, sourceMovieID 
 	return uuid.Nil, false, err
 }
 
-func ensureGenre(ctx context.Context, tx *sql.Tx, name string) (uuid.UUID, error) {
+func ensureGenre(ctx context.Context, tx *sql.Tx, genre domain.Genre) (uuid.UUID, error) {
+	if genre.ID != uuid.Nil {
+		var existingID uuid.UUID
+		err := tx.QueryRowContext(ctx, `SELECT id FROM genres WHERE id = $1`, genre.ID).Scan(&existingID)
+		if err == nil {
+			return existingID, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return uuid.Nil, err
+		}
+	}
+
+	name := strings.TrimSpace(genre.Name)
+	if name == "" {
+		return uuid.Nil, domain.ErrInvalidGenre
+	}
+
 	var genreID uuid.UUID
 	err := tx.QueryRowContext(ctx, `SELECT id FROM genres WHERE name = $1`, name).Scan(&genreID)
 	if err == nil {
@@ -161,9 +185,12 @@ func ensureGenre(ctx context.Context, tx *sql.Tx, name string) (uuid.UUID, error
 		return uuid.Nil, err
 	}
 
-	genreID, err = uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil, err
+	genreID = genre.ID
+	if genreID == uuid.Nil {
+		genreID, err = uuid.NewRandom()
+		if err != nil {
+			return uuid.Nil, err
+		}
 	}
 
 	if _, err := tx.ExecContext(
@@ -184,8 +211,28 @@ func ensureGenre(ctx context.Context, tx *sql.Tx, name string) (uuid.UUID, error
 	return genreID, nil
 }
 
-func ensurePerson(ctx context.Context, tx *sql.Tx, fullName string) (uuid.UUID, error) {
-	name, surname := splitFullName(fullName)
+func ensurePerson(ctx context.Context, tx *sql.Tx, person domain.Person) (uuid.UUID, error) {
+	if person.ID != uuid.Nil {
+		var existingID uuid.UUID
+		err := tx.QueryRowContext(ctx, `SELECT id FROM persons WHERE id = $1`, person.ID).Scan(&existingID)
+		if err == nil {
+			return existingID, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return uuid.Nil, err
+		}
+	}
+
+	name := strings.TrimSpace(person.Name)
+	surname := strings.TrimSpace(person.Surname)
+	if name == "" || surname == "" {
+		return uuid.Nil, domain.ErrInvalidPerson
+	}
+
+	var birthYear any
+	if person.BirthYear > 0 {
+		birthYear = person.BirthYear
+	}
 
 	var personID uuid.UUID
 	err := tx.QueryRowContext(
@@ -194,10 +241,11 @@ func ensurePerson(ctx context.Context, tx *sql.Tx, fullName string) (uuid.UUID, 
 		FROM persons
 		WHERE name = $1
 		  AND surname = $2
-		  AND birth_year IS NULL
+		  AND ((birth_year = $3) OR (birth_year IS NULL AND $3 IS NULL))
 		LIMIT 1`,
 		name,
 		surname,
+		birthYear,
 	).Scan(&personID)
 	if err == nil {
 		return personID, nil
@@ -206,18 +254,22 @@ func ensurePerson(ctx context.Context, tx *sql.Tx, fullName string) (uuid.UUID, 
 		return uuid.Nil, err
 	}
 
-	personID, err = uuid.NewRandom()
-	if err != nil {
-		return uuid.Nil, err
+	personID = person.ID
+	if personID == uuid.Nil {
+		personID, err = uuid.NewRandom()
+		if err != nil {
+			return uuid.Nil, err
+		}
 	}
 
 	if _, err := tx.ExecContext(
 		ctx,
 		`INSERT INTO persons (id, name, surname, birth_year)
-		VALUES ($1, $2, $3, NULL)`,
+		VALUES ($1, $2, $3, $4)`,
 		personID,
 		name,
 		surname,
+		birthYear,
 	); err != nil {
 		return uuid.Nil, err
 	}
@@ -226,10 +278,11 @@ func ensurePerson(ctx context.Context, tx *sql.Tx, fullName string) (uuid.UUID, 
 }
 
 func baseMovieSelectQuery() string {
-	return fmt.Sprintf(`
+	return `
 SELECT
 	m.id,
 	m.title,
+	m.description,
 	m.country,
 	m.release_year,
 	m.imdb_rating,
@@ -242,35 +295,54 @@ SELECT
 	COALESCE(directors.directors, '[]'::json) AS directors
 FROM movies m
 LEFT JOIN LATERAL (
-	SELECT json_agg(items.name ORDER BY items.name) AS genres
+	SELECT json_agg(
+		json_build_object(
+			'id', items.id,
+			'name', items.name
+		)
+		ORDER BY items.name, items.id
+	) AS genres
 	FROM (
-		SELECT DISTINCT g.name
+		SELECT DISTINCT g.id, g.name
 		FROM movie_genres mg
 		JOIN genres g ON g.id = mg.genre_id
 		WHERE mg.movie_id = m.id
 	) items
 ) genres ON TRUE
 LEFT JOIN LATERAL (
-	SELECT json_agg(items.full_name ORDER BY items.full_name) AS actors
+	SELECT json_agg(
+		json_build_object(
+			'id', items.id,
+			'name', items.name,
+			'surname', items.surname,
+			'birth_year', items.birth_year
+		)
+		ORDER BY items.name, items.surname, items.id
+	) AS actors
 	FROM (
-		SELECT DISTINCT %s AS full_name
+		SELECT DISTINCT p.id, p.name, p.surname, p.birth_year
 		FROM movie_actors ma
 		JOIN persons p ON p.id = ma.person_id
 		WHERE ma.movie_id = m.id
 	) items
 ) actors ON TRUE
 LEFT JOIN LATERAL (
-	SELECT json_agg(items.full_name ORDER BY items.full_name) AS directors
+	SELECT json_agg(
+		json_build_object(
+			'id', items.id,
+			'name', items.name,
+			'surname', items.surname,
+			'birth_year', items.birth_year
+		)
+		ORDER BY items.name, items.surname, items.id
+	) AS directors
 	FROM (
-		SELECT DISTINCT %s AS full_name
+		SELECT DISTINCT p.id, p.name, p.surname, p.birth_year
 		FROM movie_directors md
 		JOIN persons p ON p.id = md.person_id
 		WHERE md.movie_id = m.id
 	) items
-) directors ON TRUE`,
-		personDisplayNameExpr("p"),
-		personDisplayNameExpr("p"),
-	)
+) directors ON TRUE`
 }
 
 func scanMovies(rows *sql.Rows) ([]domain.Movie, error) {
@@ -288,6 +360,7 @@ func scanMovies(rows *sql.Rows) ([]domain.Movie, error) {
 		if err := rows.Scan(
 			&movie.MovieID,
 			&movie.Title,
+			&movie.Description,
 			&movie.Country,
 			&movie.ReleaseYear,
 			&movie.IMDbRating,
@@ -364,8 +437,11 @@ func buildPersonFilterClause(table, alias string, people []domain.Person, addArg
 		}
 
 		var fields []string
-		if fullName := joinNameParts(person.Name, person.Surname); fullName != "" {
-			fields = append(fields, fmt.Sprintf("%s = %s", personDisplayNameExpr("p"), addArg(fullName)))
+		if name := strings.TrimSpace(person.Name); name != "" {
+			fields = append(fields, fmt.Sprintf("p.name = %s", addArg(name)))
+		}
+		if surname := strings.TrimSpace(person.Surname); surname != "" {
+			fields = append(fields, fmt.Sprintf("p.surname = %s", addArg(surname)))
 		}
 		if person.BirthYear > 0 {
 			fields = append(fields, fmt.Sprintf("p.birth_year = %s", addArg(person.BirthYear)))
@@ -417,31 +493,5 @@ func buildMovieOrderBy(sortBy, sortOrder string) string {
 }
 
 func personDisplayNameExpr(alias string) string {
-	return fmt.Sprintf(
-		"CASE WHEN %s.name = %s.surname OR %s.surname = '' THEN %s.name ELSE concat_ws(' ', %s.name, %s.surname) END",
-		alias,
-		alias,
-		alias,
-		alias,
-		alias,
-		alias,
-	)
-}
-
-func splitFullName(fullName string) (string, string) {
-	normalized := strings.Join(strings.Fields(fullName), " ")
-	if normalized == "" {
-		return "", ""
-	}
-
-	parts := strings.Split(normalized, " ")
-	if len(parts) == 1 {
-		return normalized, normalized
-	}
-
-	return strings.Join(parts[:len(parts)-1], " "), parts[len(parts)-1]
-}
-
-func joinNameParts(name, surname string) string {
-	return strings.TrimSpace(strings.TrimSpace(name) + " " + strings.TrimSpace(surname))
+	return fmt.Sprintf("concat_ws(' ', %s.name, %s.surname)", alias, alias)
 }
