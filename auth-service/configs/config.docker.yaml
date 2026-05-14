@@ -1,0 +1,5 @@
+grpc:
+  addr: ":50051"
+postgres:
+  url: "postgres://auth:authpassword@postgres:5432/authdb?sslmode=disable"
+shutdown_timeout: 10s

@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  auth-service:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+    ports:
+      - "9090:9090"
+    networks:
+      - auth-network
+
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: authpassword
+      POSTGRES_DB: authdb
+    volumes:
+      - auth_postgres_data:/var/lib/postgresql/data
+    networks:
+      - auth-network
+
+volumes:
+  auth_postgres_data:
+
+networks:
+  auth-network:
+    driver: bridge
