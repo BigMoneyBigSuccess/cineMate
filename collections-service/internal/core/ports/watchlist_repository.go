@@ -10,5 +10,5 @@ import (
 type WatchlistRepository interface {
 	AddMovie(ctx context.Context, userID, movieID uuid.UUID) error
 	RemoveMovie(ctx context.Context, userID, movieID uuid.UUID) error
-	GetWatchlist(ctx context.Context, userID uuid.UUID) ([]domain.Movie, error)
+	GetUserWatchlist(ctx context.Context, userID uuid.UUID) ([]domain.Movie, error)
 }

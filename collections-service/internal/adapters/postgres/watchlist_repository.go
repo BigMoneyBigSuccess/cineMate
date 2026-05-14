@@ -43,7 +43,7 @@ func (r *WatchlistRepository) RemoveMovie(ctx context.Context, userID, movieID u
 	return err
 }
 
-func (r *WatchlistRepository) GetWatchlist(ctx context.Context, userID uuid.UUID) ([]domain.Movie, error) {
+func (r *WatchlistRepository) GetUserWatchlist(ctx context.Context, userID uuid.UUID) ([]domain.Movie, error) {
 	rows, err := r.db.QueryContext(
 		ctx,
 		`SELECT movie_id

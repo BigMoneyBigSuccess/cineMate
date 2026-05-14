@@ -21,7 +21,7 @@ service MovieCatalogAdminService {
 service WatchlistService {
   rpc AddMovieToWatchlist(AddMovieToWatchlistRequest) returns (google.protobuf.Empty);
   rpc RemoveMovieFromWatchlist(RemoveMovieFromWatchlistRequest) returns (google.protobuf.Empty);
-  rpc GetWatchlist(GetWatchlistRequest) returns (GetWatchlistResponse);
+  rpc GetUserWatchlist(GetUserWatchlistRequest) returns (GetUserWatchlistResponse);
 }
 
 message Movie {
@@ -103,10 +103,10 @@ message RemoveMovieFromWatchlistRequest {
   string movie_id = 2;
 }
 
-message GetWatchlistRequest {
+message GetUserWatchlistRequest {
   string user_id = 1;
 }
 
-message GetWatchlistResponse {
+message GetUserWatchlistResponse {
   repeated Movie movies = 1;
 }

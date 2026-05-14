@@ -171,7 +171,7 @@ func (h *MovieHandler) RemoveMovieFromWatchlist(ctx context.Context, req *moviec
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) GetWatchlist(ctx context.Context, req *moviecollectionv1.GetWatchlistRequest) (*moviecollectionv1.GetWatchlistResponse, error) {
+func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *moviecollectionv1.GetUserWatchlistRequest) (*moviecollectionv1.GetUserWatchlistResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -186,7 +186,7 @@ func (h *MovieHandler) GetWatchlist(ctx context.Context, req *moviecollectionv1.
 		return nil, mapError(err)
 	}
 
-	response := &moviecollectionv1.GetWatchlistResponse{
+	response := &moviecollectionv1.GetUserWatchlistResponse{
 		Movies: make([]*moviecollectionv1.Movie, 0, len(movies)),
 	}
 	for _, movie := range movies {
