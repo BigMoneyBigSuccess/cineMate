@@ -12,7 +12,7 @@ type MovieRepository interface {
 	ArchiveMovie(ctx context.Context, id uuid.UUID) error
 	RemoveMovie(ctx context.Context, id uuid.UUID) error
 	GetMovieByID(ctx context.Context, id uuid.UUID) (*domain.Movie, error)
-	List(ctx context.Context, filter MovieFilter) ([]domain.Movie, error)
+	ListMovies(ctx context.Context, filter MovieFilter) ([]domain.Movie, error)
 }
 
 type MovieFilter struct {

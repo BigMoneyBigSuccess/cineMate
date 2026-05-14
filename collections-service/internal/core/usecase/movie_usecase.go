@@ -36,5 +36,5 @@ func (uc *MovieUseCase) GetMovieByID(ctx context.Context, id uuid.UUID) (*domain
 }
 
 func (uc *MovieUseCase) ListMovies(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
-	return uc.movies.List(ctx, filter)
+	return uc.movies.ListMovies(ctx, filter)
 }
