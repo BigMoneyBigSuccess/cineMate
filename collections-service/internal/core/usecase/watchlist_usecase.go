@@ -25,5 +25,5 @@ func (uc *WatchlistUseCase) RemoveMovieFromWatchlist(ctx context.Context, userID
 }
 
 func (uc *WatchlistUseCase) GetUserWatchlist(ctx context.Context, userID uuid.UUID) ([]domain.Movie, error) {
-	return uc.watchlist.GetWatchlist(ctx, userID)
+	return uc.watchlist.GetUserWatchlist(ctx, userID)
 }
