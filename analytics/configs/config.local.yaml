@@ -1,0 +1,15 @@
+grpc:
+  addr: ":8081"
+
+postgres:
+  url: "postgres://analytics:analytics@localhost:5432/analytics?sslmode=disable"
+
+movie_collection:
+  addr: "localhost:8080"
+  timeout: 3s
+
+recommendation:
+  default_limit: 10
+  candidate_pool_size: 100
+
+shutdown_timeout: 10s
