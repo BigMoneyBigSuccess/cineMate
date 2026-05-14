@@ -163,6 +163,114 @@ func (x *Movie) GetArchivedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+type MovieSnapshot struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MovieId       string                 `protobuf:"bytes,1,opt,name=movie_id,json=movieId,proto3" json:"movie_id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Genres        []*Genre               `protobuf:"bytes,4,rep,name=genres,proto3" json:"genres,omitempty"`
+	Actors        []*Person              `protobuf:"bytes,5,rep,name=actors,proto3" json:"actors,omitempty"`
+	Directors     []*Person              `protobuf:"bytes,6,rep,name=directors,proto3" json:"directors,omitempty"`
+	Country       string                 `protobuf:"bytes,7,opt,name=country,proto3" json:"country,omitempty"`
+	ReleaseYear   int32                  `protobuf:"varint,8,opt,name=release_year,json=releaseYear,proto3" json:"release_year,omitempty"`
+	ImdbRating    float32                `protobuf:"fixed32,9,opt,name=imdb_rating,json=imdbRating,proto3" json:"imdb_rating,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MovieSnapshot) Reset() {
+	*x = MovieSnapshot{}
+	mi := &file_movie_collection_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MovieSnapshot) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MovieSnapshot) ProtoMessage() {}
+
+func (x *MovieSnapshot) ProtoReflect() protoreflect.Message {
+	mi := &file_movie_collection_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MovieSnapshot.ProtoReflect.Descriptor instead.
+func (*MovieSnapshot) Descriptor() ([]byte, []int) {
+	return file_movie_collection_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MovieSnapshot) GetMovieId() string {
+	if x != nil {
+		return x.MovieId
+	}
+	return ""
+}
+
+func (x *MovieSnapshot) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *MovieSnapshot) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *MovieSnapshot) GetGenres() []*Genre {
+	if x != nil {
+		return x.Genres
+	}
+	return nil
+}
+
+func (x *MovieSnapshot) GetActors() []*Person {
+	if x != nil {
+		return x.Actors
+	}
+	return nil
+}
+
+func (x *MovieSnapshot) GetDirectors() []*Person {
+	if x != nil {
+		return x.Directors
+	}
+	return nil
+}
+
+func (x *MovieSnapshot) GetCountry() string {
+	if x != nil {
+		return x.Country
+	}
+	return ""
+}
+
+func (x *MovieSnapshot) GetReleaseYear() int32 {
+	if x != nil {
+		return x.ReleaseYear
+	}
+	return 0
+}
+
+func (x *MovieSnapshot) GetImdbRating() float32 {
+	if x != nil {
+		return x.ImdbRating
+	}
+	return 0
+}
+
 type Genre struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -173,7 +281,7 @@ type Genre struct {
 
 func (x *Genre) Reset() {
 	*x = Genre{}
-	mi := &file_movie_collection_proto_msgTypes[1]
+	mi := &file_movie_collection_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -185,7 +293,7 @@ func (x *Genre) String() string {
 func (*Genre) ProtoMessage() {}
 
 func (x *Genre) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[1]
+	mi := &file_movie_collection_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -198,7 +306,7 @@ func (x *Genre) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Genre.ProtoReflect.Descriptor instead.
 func (*Genre) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{1}
+	return file_movie_collection_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Genre) GetId() string {
@@ -227,7 +335,7 @@ type Person struct {
 
 func (x *Person) Reset() {
 	*x = Person{}
-	mi := &file_movie_collection_proto_msgTypes[2]
+	mi := &file_movie_collection_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -239,7 +347,7 @@ func (x *Person) String() string {
 func (*Person) ProtoMessage() {}
 
 func (x *Person) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[2]
+	mi := &file_movie_collection_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,7 +360,7 @@ func (x *Person) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Person.ProtoReflect.Descriptor instead.
 func (*Person) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{2}
+	return file_movie_collection_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Person) GetId() string {
@@ -292,7 +400,7 @@ type GetMovieByIDRequest struct {
 
 func (x *GetMovieByIDRequest) Reset() {
 	*x = GetMovieByIDRequest{}
-	mi := &file_movie_collection_proto_msgTypes[3]
+	mi := &file_movie_collection_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -304,7 +412,7 @@ func (x *GetMovieByIDRequest) String() string {
 func (*GetMovieByIDRequest) ProtoMessage() {}
 
 func (x *GetMovieByIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[3]
+	mi := &file_movie_collection_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -317,7 +425,7 @@ func (x *GetMovieByIDRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMovieByIDRequest.ProtoReflect.Descriptor instead.
 func (*GetMovieByIDRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{3}
+	return file_movie_collection_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetMovieByIDRequest) GetMovieId() string {
@@ -329,14 +437,14 @@ func (x *GetMovieByIDRequest) GetMovieId() string {
 
 type GetMovieByIDResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Movie         *Movie                 `protobuf:"bytes,1,opt,name=movie,proto3" json:"movie,omitempty"`
+	Movie         *MovieSnapshot         `protobuf:"bytes,1,opt,name=movie,proto3" json:"movie,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetMovieByIDResponse) Reset() {
 	*x = GetMovieByIDResponse{}
-	mi := &file_movie_collection_proto_msgTypes[4]
+	mi := &file_movie_collection_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -348,7 +456,7 @@ func (x *GetMovieByIDResponse) String() string {
 func (*GetMovieByIDResponse) ProtoMessage() {}
 
 func (x *GetMovieByIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[4]
+	mi := &file_movie_collection_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -361,10 +469,10 @@ func (x *GetMovieByIDResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMovieByIDResponse.ProtoReflect.Descriptor instead.
 func (*GetMovieByIDResponse) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{4}
+	return file_movie_collection_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetMovieByIDResponse) GetMovie() *Movie {
+func (x *GetMovieByIDResponse) GetMovie() *MovieSnapshot {
 	if x != nil {
 		return x.Movie
 	}
@@ -393,7 +501,7 @@ type ListMoviesRequest struct {
 
 func (x *ListMoviesRequest) Reset() {
 	*x = ListMoviesRequest{}
-	mi := &file_movie_collection_proto_msgTypes[5]
+	mi := &file_movie_collection_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +513,7 @@ func (x *ListMoviesRequest) String() string {
 func (*ListMoviesRequest) ProtoMessage() {}
 
 func (x *ListMoviesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[5]
+	mi := &file_movie_collection_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +526,7 @@ func (x *ListMoviesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMoviesRequest.ProtoReflect.Descriptor instead.
 func (*ListMoviesRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{5}
+	return file_movie_collection_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListMoviesRequest) GetQuery() string {
@@ -521,14 +629,14 @@ func (x *ListMoviesRequest) GetIncludeArchived() bool {
 
 type ListMoviesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Movies        []*Movie               `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
+	Movies        []*MovieSnapshot       `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListMoviesResponse) Reset() {
 	*x = ListMoviesResponse{}
-	mi := &file_movie_collection_proto_msgTypes[6]
+	mi := &file_movie_collection_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -540,7 +648,7 @@ func (x *ListMoviesResponse) String() string {
 func (*ListMoviesResponse) ProtoMessage() {}
 
 func (x *ListMoviesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[6]
+	mi := &file_movie_collection_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -553,10 +661,10 @@ func (x *ListMoviesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListMoviesResponse.ProtoReflect.Descriptor instead.
 func (*ListMoviesResponse) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{6}
+	return file_movie_collection_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ListMoviesResponse) GetMovies() []*Movie {
+func (x *ListMoviesResponse) GetMovies() []*MovieSnapshot {
 	if x != nil {
 		return x.Movies
 	}
@@ -572,7 +680,7 @@ type UpsertMovieRequest struct {
 
 func (x *UpsertMovieRequest) Reset() {
 	*x = UpsertMovieRequest{}
-	mi := &file_movie_collection_proto_msgTypes[7]
+	mi := &file_movie_collection_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -584,7 +692,7 @@ func (x *UpsertMovieRequest) String() string {
 func (*UpsertMovieRequest) ProtoMessage() {}
 
 func (x *UpsertMovieRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[7]
+	mi := &file_movie_collection_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -597,7 +705,7 @@ func (x *UpsertMovieRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpsertMovieRequest.ProtoReflect.Descriptor instead.
 func (*UpsertMovieRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{7}
+	return file_movie_collection_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpsertMovieRequest) GetMovie() *Movie {
@@ -616,7 +724,7 @@ type ArchiveMovieRequest struct {
 
 func (x *ArchiveMovieRequest) Reset() {
 	*x = ArchiveMovieRequest{}
-	mi := &file_movie_collection_proto_msgTypes[8]
+	mi := &file_movie_collection_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +736,7 @@ func (x *ArchiveMovieRequest) String() string {
 func (*ArchiveMovieRequest) ProtoMessage() {}
 
 func (x *ArchiveMovieRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[8]
+	mi := &file_movie_collection_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -641,7 +749,7 @@ func (x *ArchiveMovieRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveMovieRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveMovieRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{8}
+	return file_movie_collection_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ArchiveMovieRequest) GetMovieId() string {
@@ -660,7 +768,7 @@ type RemoveMovieRequest struct {
 
 func (x *RemoveMovieRequest) Reset() {
 	*x = RemoveMovieRequest{}
-	mi := &file_movie_collection_proto_msgTypes[9]
+	mi := &file_movie_collection_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -672,7 +780,7 @@ func (x *RemoveMovieRequest) String() string {
 func (*RemoveMovieRequest) ProtoMessage() {}
 
 func (x *RemoveMovieRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[9]
+	mi := &file_movie_collection_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -685,7 +793,7 @@ func (x *RemoveMovieRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMovieRequest.ProtoReflect.Descriptor instead.
 func (*RemoveMovieRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{9}
+	return file_movie_collection_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *RemoveMovieRequest) GetMovieId() string {
@@ -705,7 +813,7 @@ type AddMovieToWatchlistRequest struct {
 
 func (x *AddMovieToWatchlistRequest) Reset() {
 	*x = AddMovieToWatchlistRequest{}
-	mi := &file_movie_collection_proto_msgTypes[10]
+	mi := &file_movie_collection_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -717,7 +825,7 @@ func (x *AddMovieToWatchlistRequest) String() string {
 func (*AddMovieToWatchlistRequest) ProtoMessage() {}
 
 func (x *AddMovieToWatchlistRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[10]
+	mi := &file_movie_collection_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -730,7 +838,7 @@ func (x *AddMovieToWatchlistRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddMovieToWatchlistRequest.ProtoReflect.Descriptor instead.
 func (*AddMovieToWatchlistRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{10}
+	return file_movie_collection_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *AddMovieToWatchlistRequest) GetUserId() string {
@@ -757,7 +865,7 @@ type RemoveMovieFromWatchlistRequest struct {
 
 func (x *RemoveMovieFromWatchlistRequest) Reset() {
 	*x = RemoveMovieFromWatchlistRequest{}
-	mi := &file_movie_collection_proto_msgTypes[11]
+	mi := &file_movie_collection_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +877,7 @@ func (x *RemoveMovieFromWatchlistRequest) String() string {
 func (*RemoveMovieFromWatchlistRequest) ProtoMessage() {}
 
 func (x *RemoveMovieFromWatchlistRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[11]
+	mi := &file_movie_collection_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +890,7 @@ func (x *RemoveMovieFromWatchlistRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveMovieFromWatchlistRequest.ProtoReflect.Descriptor instead.
 func (*RemoveMovieFromWatchlistRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{11}
+	return file_movie_collection_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RemoveMovieFromWatchlistRequest) GetUserId() string {
@@ -808,7 +916,7 @@ type GetUserWatchlistRequest struct {
 
 func (x *GetUserWatchlistRequest) Reset() {
 	*x = GetUserWatchlistRequest{}
-	mi := &file_movie_collection_proto_msgTypes[12]
+	mi := &file_movie_collection_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -820,7 +928,7 @@ func (x *GetUserWatchlistRequest) String() string {
 func (*GetUserWatchlistRequest) ProtoMessage() {}
 
 func (x *GetUserWatchlistRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[12]
+	mi := &file_movie_collection_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -833,7 +941,7 @@ func (x *GetUserWatchlistRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserWatchlistRequest.ProtoReflect.Descriptor instead.
 func (*GetUserWatchlistRequest) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{12}
+	return file_movie_collection_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetUserWatchlistRequest) GetUserId() string {
@@ -845,14 +953,14 @@ func (x *GetUserWatchlistRequest) GetUserId() string {
 
 type GetUserWatchlistResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Movies        []*Movie               `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
+	Movies        []*MovieSnapshot       `protobuf:"bytes,1,rep,name=movies,proto3" json:"movies,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetUserWatchlistResponse) Reset() {
 	*x = GetUserWatchlistResponse{}
-	mi := &file_movie_collection_proto_msgTypes[13]
+	mi := &file_movie_collection_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -864,7 +972,7 @@ func (x *GetUserWatchlistResponse) String() string {
 func (*GetUserWatchlistResponse) ProtoMessage() {}
 
 func (x *GetUserWatchlistResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_movie_collection_proto_msgTypes[13]
+	mi := &file_movie_collection_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,10 +985,10 @@ func (x *GetUserWatchlistResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetUserWatchlistResponse.ProtoReflect.Descriptor instead.
 func (*GetUserWatchlistResponse) Descriptor() ([]byte, []int) {
-	return file_movie_collection_proto_rawDescGZIP(), []int{13}
+	return file_movie_collection_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *GetUserWatchlistResponse) GetMovies() []*Movie {
+func (x *GetUserWatchlistResponse) GetMovies() []*MovieSnapshot {
 	if x != nil {
 		return x.Movies
 	}
@@ -909,7 +1017,18 @@ const file_movie_collection_proto_rawDesc = "" +
 	"\flast_sync_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSyncAt\x12;\n" +
 	"\varchived_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"archivedAt\"+\n" +
+	"archivedAt\"\xe1\x02\n" +
+	"\rMovieSnapshot\x12\x19\n" +
+	"\bmovie_id\x18\x01 \x01(\tR\amovieId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x121\n" +
+	"\x06genres\x18\x04 \x03(\v2\x19.moviecollection.v1.GenreR\x06genres\x122\n" +
+	"\x06actors\x18\x05 \x03(\v2\x1a.moviecollection.v1.PersonR\x06actors\x128\n" +
+	"\tdirectors\x18\x06 \x03(\v2\x1a.moviecollection.v1.PersonR\tdirectors\x12\x18\n" +
+	"\acountry\x18\a \x01(\tR\acountry\x12!\n" +
+	"\frelease_year\x18\b \x01(\x05R\vreleaseYear\x12\x1f\n" +
+	"\vimdb_rating\x18\t \x01(\x02R\n" +
+	"imdbRating\"+\n" +
 	"\x05Genre\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"y\n" +
@@ -921,9 +1040,9 @@ const file_movie_collection_proto_rawDesc = "" +
 	"birth_year\x18\x04 \x01(\x05H\x00R\tbirthYear\x88\x01\x01B\r\n" +
 	"\v_birth_year\"0\n" +
 	"\x13GetMovieByIDRequest\x12\x19\n" +
-	"\bmovie_id\x18\x01 \x01(\tR\amovieId\"G\n" +
-	"\x14GetMovieByIDResponse\x12/\n" +
-	"\x05movie\x18\x01 \x01(\v2\x19.moviecollection.v1.MovieR\x05movie\"\x90\x05\n" +
+	"\bmovie_id\x18\x01 \x01(\tR\amovieId\"O\n" +
+	"\x14GetMovieByIDResponse\x127\n" +
+	"\x05movie\x18\x01 \x01(\v2!.moviecollection.v1.MovieSnapshotR\x05movie\"\x90\x05\n" +
 	"\x11ListMoviesRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x121\n" +
 	"\x06genres\x18\x02 \x03(\v2\x19.moviecollection.v1.GenreR\x06genres\x122\n" +
@@ -946,9 +1065,9 @@ const file_movie_collection_proto_rawDesc = "" +
 	"\x12_release_year_fromB\x12\n" +
 	"\x10_release_year_toB\x13\n" +
 	"\x11_imdb_rating_fromB\x11\n" +
-	"\x0f_imdb_rating_to\"G\n" +
-	"\x12ListMoviesResponse\x121\n" +
-	"\x06movies\x18\x01 \x03(\v2\x19.moviecollection.v1.MovieR\x06movies\"E\n" +
+	"\x0f_imdb_rating_to\"O\n" +
+	"\x12ListMoviesResponse\x129\n" +
+	"\x06movies\x18\x01 \x03(\v2!.moviecollection.v1.MovieSnapshotR\x06movies\"E\n" +
 	"\x12UpsertMovieRequest\x12/\n" +
 	"\x05movie\x18\x01 \x01(\v2\x19.moviecollection.v1.MovieR\x05movie\"0\n" +
 	"\x13ArchiveMovieRequest\x12\x19\n" +
@@ -962,9 +1081,9 @@ const file_movie_collection_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x19\n" +
 	"\bmovie_id\x18\x02 \x01(\tR\amovieId\"2\n" +
 	"\x17GetUserWatchlistRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"M\n" +
-	"\x18GetUserWatchlistResponse\x121\n" +
-	"\x06movies\x18\x01 \x03(\v2\x19.moviecollection.v1.MovieR\x06movies2\xd5\x01\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"U\n" +
+	"\x18GetUserWatchlistResponse\x129\n" +
+	"\x06movies\x18\x01 \x03(\v2!.moviecollection.v1.MovieSnapshotR\x06movies2\xd5\x01\n" +
 	"\x13MovieCatalogService\x12a\n" +
 	"\fGetMovieByID\x12'.moviecollection.v1.GetMovieByIDRequest\x1a(.moviecollection.v1.GetMovieByIDResponse\x12[\n" +
 	"\n" +
@@ -990,59 +1109,63 @@ func file_movie_collection_proto_rawDescGZIP() []byte {
 	return file_movie_collection_proto_rawDescData
 }
 
-var file_movie_collection_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_movie_collection_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_movie_collection_proto_goTypes = []any{
 	(*Movie)(nil),                           // 0: moviecollection.v1.Movie
-	(*Genre)(nil),                           // 1: moviecollection.v1.Genre
-	(*Person)(nil),                          // 2: moviecollection.v1.Person
-	(*GetMovieByIDRequest)(nil),             // 3: moviecollection.v1.GetMovieByIDRequest
-	(*GetMovieByIDResponse)(nil),            // 4: moviecollection.v1.GetMovieByIDResponse
-	(*ListMoviesRequest)(nil),               // 5: moviecollection.v1.ListMoviesRequest
-	(*ListMoviesResponse)(nil),              // 6: moviecollection.v1.ListMoviesResponse
-	(*UpsertMovieRequest)(nil),              // 7: moviecollection.v1.UpsertMovieRequest
-	(*ArchiveMovieRequest)(nil),             // 8: moviecollection.v1.ArchiveMovieRequest
-	(*RemoveMovieRequest)(nil),              // 9: moviecollection.v1.RemoveMovieRequest
-	(*AddMovieToWatchlistRequest)(nil),      // 10: moviecollection.v1.AddMovieToWatchlistRequest
-	(*RemoveMovieFromWatchlistRequest)(nil), // 11: moviecollection.v1.RemoveMovieFromWatchlistRequest
-	(*GetUserWatchlistRequest)(nil),         // 12: moviecollection.v1.GetUserWatchlistRequest
-	(*GetUserWatchlistResponse)(nil),        // 13: moviecollection.v1.GetUserWatchlistResponse
-	(*timestamppb.Timestamp)(nil),           // 14: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),                   // 15: google.protobuf.Empty
+	(*MovieSnapshot)(nil),                   // 1: moviecollection.v1.MovieSnapshot
+	(*Genre)(nil),                           // 2: moviecollection.v1.Genre
+	(*Person)(nil),                          // 3: moviecollection.v1.Person
+	(*GetMovieByIDRequest)(nil),             // 4: moviecollection.v1.GetMovieByIDRequest
+	(*GetMovieByIDResponse)(nil),            // 5: moviecollection.v1.GetMovieByIDResponse
+	(*ListMoviesRequest)(nil),               // 6: moviecollection.v1.ListMoviesRequest
+	(*ListMoviesResponse)(nil),              // 7: moviecollection.v1.ListMoviesResponse
+	(*UpsertMovieRequest)(nil),              // 8: moviecollection.v1.UpsertMovieRequest
+	(*ArchiveMovieRequest)(nil),             // 9: moviecollection.v1.ArchiveMovieRequest
+	(*RemoveMovieRequest)(nil),              // 10: moviecollection.v1.RemoveMovieRequest
+	(*AddMovieToWatchlistRequest)(nil),      // 11: moviecollection.v1.AddMovieToWatchlistRequest
+	(*RemoveMovieFromWatchlistRequest)(nil), // 12: moviecollection.v1.RemoveMovieFromWatchlistRequest
+	(*GetUserWatchlistRequest)(nil),         // 13: moviecollection.v1.GetUserWatchlistRequest
+	(*GetUserWatchlistResponse)(nil),        // 14: moviecollection.v1.GetUserWatchlistResponse
+	(*timestamppb.Timestamp)(nil),           // 15: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),                   // 16: google.protobuf.Empty
 }
 var file_movie_collection_proto_depIdxs = []int32{
-	1,  // 0: moviecollection.v1.Movie.genres:type_name -> moviecollection.v1.Genre
-	2,  // 1: moviecollection.v1.Movie.actors:type_name -> moviecollection.v1.Person
-	2,  // 2: moviecollection.v1.Movie.directors:type_name -> moviecollection.v1.Person
-	14, // 3: moviecollection.v1.Movie.last_sync_at:type_name -> google.protobuf.Timestamp
-	14, // 4: moviecollection.v1.Movie.archived_at:type_name -> google.protobuf.Timestamp
-	0,  // 5: moviecollection.v1.GetMovieByIDResponse.movie:type_name -> moviecollection.v1.Movie
-	1,  // 6: moviecollection.v1.ListMoviesRequest.genres:type_name -> moviecollection.v1.Genre
-	2,  // 7: moviecollection.v1.ListMoviesRequest.actors:type_name -> moviecollection.v1.Person
-	2,  // 8: moviecollection.v1.ListMoviesRequest.directors:type_name -> moviecollection.v1.Person
-	0,  // 9: moviecollection.v1.ListMoviesResponse.movies:type_name -> moviecollection.v1.Movie
-	0,  // 10: moviecollection.v1.UpsertMovieRequest.movie:type_name -> moviecollection.v1.Movie
-	0,  // 11: moviecollection.v1.GetUserWatchlistResponse.movies:type_name -> moviecollection.v1.Movie
-	3,  // 12: moviecollection.v1.MovieCatalogService.GetMovieByID:input_type -> moviecollection.v1.GetMovieByIDRequest
-	5,  // 13: moviecollection.v1.MovieCatalogService.ListMovies:input_type -> moviecollection.v1.ListMoviesRequest
-	7,  // 14: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:input_type -> moviecollection.v1.UpsertMovieRequest
-	8,  // 15: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:input_type -> moviecollection.v1.ArchiveMovieRequest
-	9,  // 16: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:input_type -> moviecollection.v1.RemoveMovieRequest
-	10, // 17: moviecollection.v1.WatchlistService.AddMovieToWatchlist:input_type -> moviecollection.v1.AddMovieToWatchlistRequest
-	11, // 18: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:input_type -> moviecollection.v1.RemoveMovieFromWatchlistRequest
-	12, // 19: moviecollection.v1.WatchlistService.GetUserWatchlist:input_type -> moviecollection.v1.GetUserWatchlistRequest
-	4,  // 20: moviecollection.v1.MovieCatalogService.GetMovieByID:output_type -> moviecollection.v1.GetMovieByIDResponse
-	6,  // 21: moviecollection.v1.MovieCatalogService.ListMovies:output_type -> moviecollection.v1.ListMoviesResponse
-	15, // 22: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:output_type -> google.protobuf.Empty
-	15, // 23: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:output_type -> google.protobuf.Empty
-	15, // 24: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:output_type -> google.protobuf.Empty
-	15, // 25: moviecollection.v1.WatchlistService.AddMovieToWatchlist:output_type -> google.protobuf.Empty
-	15, // 26: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:output_type -> google.protobuf.Empty
-	13, // 27: moviecollection.v1.WatchlistService.GetUserWatchlist:output_type -> moviecollection.v1.GetUserWatchlistResponse
-	20, // [20:28] is the sub-list for method output_type
-	12, // [12:20] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	2,  // 0: moviecollection.v1.Movie.genres:type_name -> moviecollection.v1.Genre
+	3,  // 1: moviecollection.v1.Movie.actors:type_name -> moviecollection.v1.Person
+	3,  // 2: moviecollection.v1.Movie.directors:type_name -> moviecollection.v1.Person
+	15, // 3: moviecollection.v1.Movie.last_sync_at:type_name -> google.protobuf.Timestamp
+	15, // 4: moviecollection.v1.Movie.archived_at:type_name -> google.protobuf.Timestamp
+	2,  // 5: moviecollection.v1.MovieSnapshot.genres:type_name -> moviecollection.v1.Genre
+	3,  // 6: moviecollection.v1.MovieSnapshot.actors:type_name -> moviecollection.v1.Person
+	3,  // 7: moviecollection.v1.MovieSnapshot.directors:type_name -> moviecollection.v1.Person
+	1,  // 8: moviecollection.v1.GetMovieByIDResponse.movie:type_name -> moviecollection.v1.MovieSnapshot
+	2,  // 9: moviecollection.v1.ListMoviesRequest.genres:type_name -> moviecollection.v1.Genre
+	3,  // 10: moviecollection.v1.ListMoviesRequest.actors:type_name -> moviecollection.v1.Person
+	3,  // 11: moviecollection.v1.ListMoviesRequest.directors:type_name -> moviecollection.v1.Person
+	1,  // 12: moviecollection.v1.ListMoviesResponse.movies:type_name -> moviecollection.v1.MovieSnapshot
+	0,  // 13: moviecollection.v1.UpsertMovieRequest.movie:type_name -> moviecollection.v1.Movie
+	1,  // 14: moviecollection.v1.GetUserWatchlistResponse.movies:type_name -> moviecollection.v1.MovieSnapshot
+	4,  // 15: moviecollection.v1.MovieCatalogService.GetMovieByID:input_type -> moviecollection.v1.GetMovieByIDRequest
+	6,  // 16: moviecollection.v1.MovieCatalogService.ListMovies:input_type -> moviecollection.v1.ListMoviesRequest
+	8,  // 17: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:input_type -> moviecollection.v1.UpsertMovieRequest
+	9,  // 18: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:input_type -> moviecollection.v1.ArchiveMovieRequest
+	10, // 19: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:input_type -> moviecollection.v1.RemoveMovieRequest
+	11, // 20: moviecollection.v1.WatchlistService.AddMovieToWatchlist:input_type -> moviecollection.v1.AddMovieToWatchlistRequest
+	12, // 21: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:input_type -> moviecollection.v1.RemoveMovieFromWatchlistRequest
+	13, // 22: moviecollection.v1.WatchlistService.GetUserWatchlist:input_type -> moviecollection.v1.GetUserWatchlistRequest
+	5,  // 23: moviecollection.v1.MovieCatalogService.GetMovieByID:output_type -> moviecollection.v1.GetMovieByIDResponse
+	7,  // 24: moviecollection.v1.MovieCatalogService.ListMovies:output_type -> moviecollection.v1.ListMoviesResponse
+	16, // 25: moviecollection.v1.MovieCatalogAdminService.UpsertMovie:output_type -> google.protobuf.Empty
+	16, // 26: moviecollection.v1.MovieCatalogAdminService.ArchiveMovie:output_type -> google.protobuf.Empty
+	16, // 27: moviecollection.v1.MovieCatalogAdminService.RemoveMovie:output_type -> google.protobuf.Empty
+	16, // 28: moviecollection.v1.WatchlistService.AddMovieToWatchlist:output_type -> google.protobuf.Empty
+	16, // 29: moviecollection.v1.WatchlistService.RemoveMovieFromWatchlist:output_type -> google.protobuf.Empty
+	14, // 30: moviecollection.v1.WatchlistService.GetUserWatchlist:output_type -> moviecollection.v1.GetUserWatchlistResponse
+	23, // [23:31] is the sub-list for method output_type
+	15, // [15:23] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_movie_collection_proto_init() }
@@ -1050,15 +1173,15 @@ func file_movie_collection_proto_init() {
 	if File_movie_collection_proto != nil {
 		return
 	}
-	file_movie_collection_proto_msgTypes[2].OneofWrappers = []any{}
-	file_movie_collection_proto_msgTypes[5].OneofWrappers = []any{}
+	file_movie_collection_proto_msgTypes[3].OneofWrappers = []any{}
+	file_movie_collection_proto_msgTypes[6].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_movie_collection_proto_rawDesc), len(file_movie_collection_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   3,
 		},

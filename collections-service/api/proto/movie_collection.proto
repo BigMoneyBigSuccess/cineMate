@@ -40,6 +40,18 @@ message Movie {
   google.protobuf.Timestamp archived_at = 13;
 }
 
+message MovieSnapshot {
+  string movie_id = 1;
+  string title = 2;
+  string description = 3;
+  repeated Genre genres = 4;
+  repeated Person actors = 5;
+  repeated Person directors = 6;
+  string country = 7;
+  int32 release_year = 8;
+  float imdb_rating = 9;
+}
+
 message Genre {
   string id = 1;
   string name = 2;
@@ -57,7 +69,7 @@ message GetMovieByIDRequest {
 }
 
 message GetMovieByIDResponse {
-  Movie movie = 1;
+  MovieSnapshot movie = 1;
 }
 
 message ListMoviesRequest {
@@ -78,7 +90,7 @@ message ListMoviesRequest {
 }
 
 message ListMoviesResponse {
-  repeated Movie movies = 1;
+  repeated MovieSnapshot movies = 1;
 }
 
 message UpsertMovieRequest {
@@ -108,5 +120,5 @@ message GetUserWatchlistRequest {
 }
 
 message GetUserWatchlistResponse {
-  repeated Movie movies = 1;
+  repeated MovieSnapshot movies = 1;
 }

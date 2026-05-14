@@ -43,7 +43,7 @@ func (h *MovieHandler) GetMovieByID(ctx context.Context, req *moviecollectionv1.
 	}
 
 	return &moviecollectionv1.GetMovieByIDResponse{
-		Movie: movieToProto(*movie),
+		Movie: movieToSnapshotProto(*movie),
 	}, nil
 }
 
@@ -69,10 +69,10 @@ func (h *MovieHandler) ListMovies(ctx context.Context, req *moviecollectionv1.Li
 	}
 
 	response := &moviecollectionv1.ListMoviesResponse{
-		Movies: make([]*moviecollectionv1.Movie, 0, len(movies)),
+		Movies: make([]*moviecollectionv1.MovieSnapshot, 0, len(movies)),
 	}
 	for _, movie := range movies {
-		response.Movies = append(response.Movies, movieToProto(movie))
+		response.Movies = append(response.Movies, movieToSnapshotProto(movie))
 	}
 
 	return response, nil
@@ -187,10 +187,10 @@ func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *moviecollectio
 	}
 
 	response := &moviecollectionv1.GetUserWatchlistResponse{
-		Movies: make([]*moviecollectionv1.Movie, 0, len(movies)),
+		Movies: make([]*moviecollectionv1.MovieSnapshot, 0, len(movies)),
 	}
 	for _, movie := range movies {
-		response.Movies = append(response.Movies, movieToProto(movie))
+		response.Movies = append(response.Movies, movieToSnapshotProto(movie))
 	}
 
 	return response, nil
