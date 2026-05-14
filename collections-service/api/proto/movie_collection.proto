@@ -5,7 +5,6 @@ package moviecollection.v1;
 option go_package = "movie_collection/api/proto/moviecollectionv1;moviecollectionv1";
 
 import "google/protobuf/empty.proto";
-import "google/protobuf/timestamp.proto";
 
 service MovieCatalogService {
   rpc GetMovieByID(GetMovieByIDRequest) returns (GetMovieByIDResponse);
@@ -34,22 +33,6 @@ message Movie {
   string country = 7;
   int32 release_year = 8;
   float imdb_rating = 9;
-  string source = 10;
-  string source_movie_id = 11;
-  google.protobuf.Timestamp last_sync_at = 12;
-  google.protobuf.Timestamp archived_at = 13;
-}
-
-message MovieSnapshot {
-  string movie_id = 1;
-  string title = 2;
-  string description = 3;
-  repeated Genre genres = 4;
-  repeated Person actors = 5;
-  repeated Person directors = 6;
-  string country = 7;
-  int32 release_year = 8;
-  float imdb_rating = 9;
 }
 
 message Genre {
@@ -69,7 +52,7 @@ message GetMovieByIDRequest {
 }
 
 message GetMovieByIDResponse {
-  MovieSnapshot movie = 1;
+  Movie movie = 1;
 }
 
 message ListMoviesRequest {
@@ -90,7 +73,7 @@ message ListMoviesRequest {
 }
 
 message ListMoviesResponse {
-  repeated MovieSnapshot movies = 1;
+  repeated Movie movies = 1;
 }
 
 message UpsertMovieRequest {
@@ -120,5 +103,5 @@ message GetUserWatchlistRequest {
 }
 
 message GetUserWatchlistResponse {
-  repeated MovieSnapshot movies = 1;
+  repeated Movie movies = 1;
 }
