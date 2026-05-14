@@ -252,6 +252,20 @@ func movieToProto(movie domain.Movie) *moviecollectionv1.Movie {
 	}
 }
 
+func movieToSnapshotProto(movie domain.Movie) *moviecollectionv1.MovieSnapshot {
+	return &moviecollectionv1.MovieSnapshot{
+		MovieId:     movie.MovieID.String(),
+		Title:       movie.Title,
+		Description: movie.Description,
+		Genres:      genresToProto(movie.Genres),
+		Actors:      peopleToProto(movie.Actors),
+		Directors:   peopleToProto(movie.Directors),
+		Country:     movie.Country,
+		ReleaseYear: movie.ReleaseYear,
+		ImdbRating:  movie.IMDbRating,
+	}
+}
+
 func parseUUID(rawValue, field string) (uuid.UUID, error) {
 	value := strings.TrimSpace(rawValue)
 	if value == "" {
