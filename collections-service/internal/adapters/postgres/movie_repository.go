@@ -131,7 +131,7 @@ WHERE m.id = $1
 	return &movies[0], nil
 }
 
-func (r *MovieRepository) List(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
+func (r *MovieRepository) ListMovies(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
 	var (
 		args    []any
 		clauses []string

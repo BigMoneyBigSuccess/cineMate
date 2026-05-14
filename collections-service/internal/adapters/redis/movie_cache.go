@@ -101,9 +101,9 @@ func (c *MovieCache) GetMovieByID(ctx context.Context, id uuid.UUID) (*domain.Mo
 	return movie, nil
 }
 
-func (c *MovieCache) List(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
+func (c *MovieCache) ListMovies(ctx context.Context, filter ports.MovieFilter) ([]domain.Movie, error) {
 	if c.client == nil {
-		return c.next.List(ctx, filter)
+		return c.next.ListMovies(ctx, filter)
 	}
 
 	version, ok := c.readVersion(ctx, c.listVersionKey())
@@ -116,7 +116,7 @@ func (c *MovieCache) List(ctx context.Context, filter ports.MovieFilter) ([]doma
 		}
 	}
 
-	movies, err := c.next.List(ctx, filter)
+	movies, err := c.next.ListMovies(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
