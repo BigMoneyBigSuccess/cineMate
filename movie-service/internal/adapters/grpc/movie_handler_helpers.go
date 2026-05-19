@@ -1,11 +1,11 @@
-package http
+package grpc
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"movie_collection/internal/core/domain"
 
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,7 +20,7 @@ func mapError(err error) error {
 		return status.Error(codes.Canceled, context.Canceled.Error())
 	case errors.Is(err, context.DeadlineExceeded):
 		return status.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error())
-	case errors.Is(err, sql.ErrNoRows):
+	case errors.Is(err, pgx.ErrNoRows):
 		return status.Error(codes.NotFound, "movie not found")
 	case errors.Is(err, domain.ErrInvalidMovie),
 		errors.Is(err, domain.ErrInvalidGenre),

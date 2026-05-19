@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.34.1
-// source: movie_collection.proto
+// source: movie_service.proto
 
-package moviecollectionv1
+package movieservicev1
 
 import (
 	context "context"
@@ -20,328 +20,327 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MovieCatalogService_GetMovieByID_FullMethodName = "/moviecollection.v1.MovieCatalogService/GetMovieByID"
-	MovieCatalogService_ListMovies_FullMethodName   = "/moviecollection.v1.MovieCatalogService/ListMovies"
+	MovieService_GetMovieByID_FullMethodName = "/movieservice.v1.MovieService/GetMovieByID"
+	MovieService_ListMovies_FullMethodName   = "/movieservice.v1.MovieService/ListMovies"
 )
 
-// MovieCatalogServiceClient is the client API for MovieCatalogService service.
+// MovieServiceClient is the client API for MovieService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MovieCatalogServiceClient interface {
+type MovieServiceClient interface {
 	GetMovieByID(ctx context.Context, in *GetMovieByIDRequest, opts ...grpc.CallOption) (*GetMovieByIDResponse, error)
 	ListMovies(ctx context.Context, in *ListMoviesRequest, opts ...grpc.CallOption) (*ListMoviesResponse, error)
 }
 
-type movieCatalogServiceClient struct {
+type movieServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMovieCatalogServiceClient(cc grpc.ClientConnInterface) MovieCatalogServiceClient {
-	return &movieCatalogServiceClient{cc}
+func NewMovieServiceClient(cc grpc.ClientConnInterface) MovieServiceClient {
+	return &movieServiceClient{cc}
 }
 
-func (c *movieCatalogServiceClient) GetMovieByID(ctx context.Context, in *GetMovieByIDRequest, opts ...grpc.CallOption) (*GetMovieByIDResponse, error) {
+func (c *movieServiceClient) GetMovieByID(ctx context.Context, in *GetMovieByIDRequest, opts ...grpc.CallOption) (*GetMovieByIDResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetMovieByIDResponse)
-	err := c.cc.Invoke(ctx, MovieCatalogService_GetMovieByID_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MovieService_GetMovieByID_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *movieCatalogServiceClient) ListMovies(ctx context.Context, in *ListMoviesRequest, opts ...grpc.CallOption) (*ListMoviesResponse, error) {
+func (c *movieServiceClient) ListMovies(ctx context.Context, in *ListMoviesRequest, opts ...grpc.CallOption) (*ListMoviesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListMoviesResponse)
-	err := c.cc.Invoke(ctx, MovieCatalogService_ListMovies_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MovieService_ListMovies_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// MovieCatalogServiceServer is the server API for MovieCatalogService service.
-// All implementations must embed UnimplementedMovieCatalogServiceServer
+// MovieServiceServer is the server API for MovieService service.
+// All implementations must embed UnimplementedMovieServiceServer
 // for forward compatibility.
-type MovieCatalogServiceServer interface {
+type MovieServiceServer interface {
 	GetMovieByID(context.Context, *GetMovieByIDRequest) (*GetMovieByIDResponse, error)
 	ListMovies(context.Context, *ListMoviesRequest) (*ListMoviesResponse, error)
-	mustEmbedUnimplementedMovieCatalogServiceServer()
+	mustEmbedUnimplementedMovieServiceServer()
 }
 
-// UnimplementedMovieCatalogServiceServer must be embedded to have
+// UnimplementedMovieServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMovieCatalogServiceServer struct{}
+type UnimplementedMovieServiceServer struct{}
 
-func (UnimplementedMovieCatalogServiceServer) GetMovieByID(context.Context, *GetMovieByIDRequest) (*GetMovieByIDResponse, error) {
+func (UnimplementedMovieServiceServer) GetMovieByID(context.Context, *GetMovieByIDRequest) (*GetMovieByIDResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetMovieByID not implemented")
 }
-func (UnimplementedMovieCatalogServiceServer) ListMovies(context.Context, *ListMoviesRequest) (*ListMoviesResponse, error) {
+func (UnimplementedMovieServiceServer) ListMovies(context.Context, *ListMoviesRequest) (*ListMoviesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListMovies not implemented")
 }
-func (UnimplementedMovieCatalogServiceServer) mustEmbedUnimplementedMovieCatalogServiceServer() {}
-func (UnimplementedMovieCatalogServiceServer) testEmbeddedByValue()                             {}
+func (UnimplementedMovieServiceServer) mustEmbedUnimplementedMovieServiceServer() {}
+func (UnimplementedMovieServiceServer) testEmbeddedByValue()                      {}
 
-// UnsafeMovieCatalogServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MovieCatalogServiceServer will
+// UnsafeMovieServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MovieServiceServer will
 // result in compilation errors.
-type UnsafeMovieCatalogServiceServer interface {
-	mustEmbedUnimplementedMovieCatalogServiceServer()
+type UnsafeMovieServiceServer interface {
+	mustEmbedUnimplementedMovieServiceServer()
 }
 
-func RegisterMovieCatalogServiceServer(s grpc.ServiceRegistrar, srv MovieCatalogServiceServer) {
-	// If the following call panics, it indicates UnimplementedMovieCatalogServiceServer was
+func RegisterMovieServiceServer(s grpc.ServiceRegistrar, srv MovieServiceServer) {
+	// If the following call panics, it indicates UnimplementedMovieServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MovieCatalogService_ServiceDesc, srv)
+	s.RegisterService(&MovieService_ServiceDesc, srv)
 }
 
-func _MovieCatalogService_GetMovieByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MovieService_GetMovieByID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMovieByIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MovieCatalogServiceServer).GetMovieByID(ctx, in)
+		return srv.(MovieServiceServer).GetMovieByID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MovieCatalogService_GetMovieByID_FullMethodName,
+		FullMethod: MovieService_GetMovieByID_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MovieCatalogServiceServer).GetMovieByID(ctx, req.(*GetMovieByIDRequest))
+		return srv.(MovieServiceServer).GetMovieByID(ctx, req.(*GetMovieByIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MovieCatalogService_ListMovies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MovieService_ListMovies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListMoviesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MovieCatalogServiceServer).ListMovies(ctx, in)
+		return srv.(MovieServiceServer).ListMovies(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MovieCatalogService_ListMovies_FullMethodName,
+		FullMethod: MovieService_ListMovies_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MovieCatalogServiceServer).ListMovies(ctx, req.(*ListMoviesRequest))
+		return srv.(MovieServiceServer).ListMovies(ctx, req.(*ListMoviesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MovieCatalogService_ServiceDesc is the grpc.ServiceDesc for MovieCatalogService service.
+// MovieService_ServiceDesc is the grpc.ServiceDesc for MovieService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MovieCatalogService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "moviecollection.v1.MovieCatalogService",
-	HandlerType: (*MovieCatalogServiceServer)(nil),
+var MovieService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "movieservice.v1.MovieService",
+	HandlerType: (*MovieServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetMovieByID",
-			Handler:    _MovieCatalogService_GetMovieByID_Handler,
+			Handler:    _MovieService_GetMovieByID_Handler,
 		},
 		{
 			MethodName: "ListMovies",
-			Handler:    _MovieCatalogService_ListMovies_Handler,
+			Handler:    _MovieService_ListMovies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "movie_collection.proto",
+	Metadata: "movie_service.proto",
 }
 
 const (
-	MovieCatalogAdminService_UpsertMovie_FullMethodName  = "/moviecollection.v1.MovieCatalogAdminService/UpsertMovie"
-	MovieCatalogAdminService_ArchiveMovie_FullMethodName = "/moviecollection.v1.MovieCatalogAdminService/ArchiveMovie"
-	MovieCatalogAdminService_RemoveMovie_FullMethodName  = "/moviecollection.v1.MovieCatalogAdminService/RemoveMovie"
+	MovieAdminService_UpsertMovie_FullMethodName  = "/movieservice.v1.MovieAdminService/UpsertMovie"
+	MovieAdminService_ArchiveMovie_FullMethodName = "/movieservice.v1.MovieAdminService/ArchiveMovie"
+	MovieAdminService_RemoveMovie_FullMethodName  = "/movieservice.v1.MovieAdminService/RemoveMovie"
 )
 
-// MovieCatalogAdminServiceClient is the client API for MovieCatalogAdminService service.
+// MovieAdminServiceClient is the client API for MovieAdminService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MovieCatalogAdminServiceClient interface {
+type MovieAdminServiceClient interface {
 	UpsertMovie(ctx context.Context, in *UpsertMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ArchiveMovie(ctx context.Context, in *ArchiveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	RemoveMovie(ctx context.Context, in *RemoveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
-type movieCatalogAdminServiceClient struct {
+type movieAdminServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMovieCatalogAdminServiceClient(cc grpc.ClientConnInterface) MovieCatalogAdminServiceClient {
-	return &movieCatalogAdminServiceClient{cc}
+func NewMovieAdminServiceClient(cc grpc.ClientConnInterface) MovieAdminServiceClient {
+	return &movieAdminServiceClient{cc}
 }
 
-func (c *movieCatalogAdminServiceClient) UpsertMovie(ctx context.Context, in *UpsertMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *movieAdminServiceClient) UpsertMovie(ctx context.Context, in *UpsertMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, MovieCatalogAdminService_UpsertMovie_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MovieAdminService_UpsertMovie_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *movieCatalogAdminServiceClient) ArchiveMovie(ctx context.Context, in *ArchiveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *movieAdminServiceClient) ArchiveMovie(ctx context.Context, in *ArchiveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, MovieCatalogAdminService_ArchiveMovie_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MovieAdminService_ArchiveMovie_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *movieCatalogAdminServiceClient) RemoveMovie(ctx context.Context, in *RemoveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *movieAdminServiceClient) RemoveMovie(ctx context.Context, in *RemoveMovieRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, MovieCatalogAdminService_RemoveMovie_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, MovieAdminService_RemoveMovie_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// MovieCatalogAdminServiceServer is the server API for MovieCatalogAdminService service.
-// All implementations must embed UnimplementedMovieCatalogAdminServiceServer
+// MovieAdminServiceServer is the server API for MovieAdminService service.
+// All implementations must embed UnimplementedMovieAdminServiceServer
 // for forward compatibility.
-type MovieCatalogAdminServiceServer interface {
+type MovieAdminServiceServer interface {
 	UpsertMovie(context.Context, *UpsertMovieRequest) (*emptypb.Empty, error)
 	ArchiveMovie(context.Context, *ArchiveMovieRequest) (*emptypb.Empty, error)
 	RemoveMovie(context.Context, *RemoveMovieRequest) (*emptypb.Empty, error)
-	mustEmbedUnimplementedMovieCatalogAdminServiceServer()
+	mustEmbedUnimplementedMovieAdminServiceServer()
 }
 
-// UnimplementedMovieCatalogAdminServiceServer must be embedded to have
+// UnimplementedMovieAdminServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMovieCatalogAdminServiceServer struct{}
+type UnimplementedMovieAdminServiceServer struct{}
 
-func (UnimplementedMovieCatalogAdminServiceServer) UpsertMovie(context.Context, *UpsertMovieRequest) (*emptypb.Empty, error) {
+func (UnimplementedMovieAdminServiceServer) UpsertMovie(context.Context, *UpsertMovieRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpsertMovie not implemented")
 }
-func (UnimplementedMovieCatalogAdminServiceServer) ArchiveMovie(context.Context, *ArchiveMovieRequest) (*emptypb.Empty, error) {
+func (UnimplementedMovieAdminServiceServer) ArchiveMovie(context.Context, *ArchiveMovieRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method ArchiveMovie not implemented")
 }
-func (UnimplementedMovieCatalogAdminServiceServer) RemoveMovie(context.Context, *RemoveMovieRequest) (*emptypb.Empty, error) {
+func (UnimplementedMovieAdminServiceServer) RemoveMovie(context.Context, *RemoveMovieRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemoveMovie not implemented")
 }
-func (UnimplementedMovieCatalogAdminServiceServer) mustEmbedUnimplementedMovieCatalogAdminServiceServer() {
-}
-func (UnimplementedMovieCatalogAdminServiceServer) testEmbeddedByValue() {}
+func (UnimplementedMovieAdminServiceServer) mustEmbedUnimplementedMovieAdminServiceServer() {}
+func (UnimplementedMovieAdminServiceServer) testEmbeddedByValue()                           {}
 
-// UnsafeMovieCatalogAdminServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MovieCatalogAdminServiceServer will
+// UnsafeMovieAdminServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MovieAdminServiceServer will
 // result in compilation errors.
-type UnsafeMovieCatalogAdminServiceServer interface {
-	mustEmbedUnimplementedMovieCatalogAdminServiceServer()
+type UnsafeMovieAdminServiceServer interface {
+	mustEmbedUnimplementedMovieAdminServiceServer()
 }
 
-func RegisterMovieCatalogAdminServiceServer(s grpc.ServiceRegistrar, srv MovieCatalogAdminServiceServer) {
-	// If the following call panics, it indicates UnimplementedMovieCatalogAdminServiceServer was
+func RegisterMovieAdminServiceServer(s grpc.ServiceRegistrar, srv MovieAdminServiceServer) {
+	// If the following call panics, it indicates UnimplementedMovieAdminServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MovieCatalogAdminService_ServiceDesc, srv)
+	s.RegisterService(&MovieAdminService_ServiceDesc, srv)
 }
 
-func _MovieCatalogAdminService_UpsertMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MovieAdminService_UpsertMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpsertMovieRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MovieCatalogAdminServiceServer).UpsertMovie(ctx, in)
+		return srv.(MovieAdminServiceServer).UpsertMovie(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MovieCatalogAdminService_UpsertMovie_FullMethodName,
+		FullMethod: MovieAdminService_UpsertMovie_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MovieCatalogAdminServiceServer).UpsertMovie(ctx, req.(*UpsertMovieRequest))
+		return srv.(MovieAdminServiceServer).UpsertMovie(ctx, req.(*UpsertMovieRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MovieCatalogAdminService_ArchiveMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MovieAdminService_ArchiveMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ArchiveMovieRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MovieCatalogAdminServiceServer).ArchiveMovie(ctx, in)
+		return srv.(MovieAdminServiceServer).ArchiveMovie(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MovieCatalogAdminService_ArchiveMovie_FullMethodName,
+		FullMethod: MovieAdminService_ArchiveMovie_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MovieCatalogAdminServiceServer).ArchiveMovie(ctx, req.(*ArchiveMovieRequest))
+		return srv.(MovieAdminServiceServer).ArchiveMovie(ctx, req.(*ArchiveMovieRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MovieCatalogAdminService_RemoveMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MovieAdminService_RemoveMovie_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveMovieRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MovieCatalogAdminServiceServer).RemoveMovie(ctx, in)
+		return srv.(MovieAdminServiceServer).RemoveMovie(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: MovieCatalogAdminService_RemoveMovie_FullMethodName,
+		FullMethod: MovieAdminService_RemoveMovie_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MovieCatalogAdminServiceServer).RemoveMovie(ctx, req.(*RemoveMovieRequest))
+		return srv.(MovieAdminServiceServer).RemoveMovie(ctx, req.(*RemoveMovieRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// MovieCatalogAdminService_ServiceDesc is the grpc.ServiceDesc for MovieCatalogAdminService service.
+// MovieAdminService_ServiceDesc is the grpc.ServiceDesc for MovieAdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MovieCatalogAdminService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "moviecollection.v1.MovieCatalogAdminService",
-	HandlerType: (*MovieCatalogAdminServiceServer)(nil),
+var MovieAdminService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "movieservice.v1.MovieAdminService",
+	HandlerType: (*MovieAdminServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "UpsertMovie",
-			Handler:    _MovieCatalogAdminService_UpsertMovie_Handler,
+			Handler:    _MovieAdminService_UpsertMovie_Handler,
 		},
 		{
 			MethodName: "ArchiveMovie",
-			Handler:    _MovieCatalogAdminService_ArchiveMovie_Handler,
+			Handler:    _MovieAdminService_ArchiveMovie_Handler,
 		},
 		{
 			MethodName: "RemoveMovie",
-			Handler:    _MovieCatalogAdminService_RemoveMovie_Handler,
+			Handler:    _MovieAdminService_RemoveMovie_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "movie_collection.proto",
+	Metadata: "movie_service.proto",
 }
 
 const (
-	WatchlistService_AddMovieToWatchlist_FullMethodName      = "/moviecollection.v1.WatchlistService/AddMovieToWatchlist"
-	WatchlistService_RemoveMovieFromWatchlist_FullMethodName = "/moviecollection.v1.WatchlistService/RemoveMovieFromWatchlist"
-	WatchlistService_GetUserWatchlist_FullMethodName         = "/moviecollection.v1.WatchlistService/GetUserWatchlist"
+	WatchlistService_AddMovieToWatchlist_FullMethodName      = "/movieservice.v1.WatchlistService/AddMovieToWatchlist"
+	WatchlistService_RemoveMovieFromWatchlist_FullMethodName = "/movieservice.v1.WatchlistService/RemoveMovieFromWatchlist"
+	WatchlistService_GetUserWatchlist_FullMethodName         = "/movieservice.v1.WatchlistService/GetUserWatchlist"
 )
 
 // WatchlistServiceClient is the client API for WatchlistService service.
@@ -496,7 +495,7 @@ func _WatchlistService_GetUserWatchlist_Handler(srv interface{}, ctx context.Con
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var WatchlistService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "moviecollection.v1.WatchlistService",
+	ServiceName: "movieservice.v1.WatchlistService",
 	HandlerType: (*WatchlistServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -513,5 +512,5 @@ var WatchlistService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "movie_collection.proto",
+	Metadata: "movie_service.proto",
 }

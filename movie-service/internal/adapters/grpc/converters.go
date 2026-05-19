@@ -1,7 +1,7 @@
-package http
+package grpc
 
 import (
-	"movie_collection/api/proto/moviecollectionv1"
+	"movie_collection/api/proto/movieservicev1"
 	"movie_collection/internal/core/domain"
 	"movie_collection/internal/core/ports"
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func listRequestToFilter(req *moviecollectionv1.ListMoviesRequest) (ports.MovieFilter, error) {
+func listRequestToFilter(req *movieservicev1.ListMoviesRequest) (ports.MovieFilter, error) {
 	filter := ports.MovieFilter{
 		Query:           strings.TrimSpace(req.GetQuery()),
 		Limit:           int(req.GetLimit()),
@@ -71,7 +71,7 @@ func listRequestToFilter(req *moviecollectionv1.ListMoviesRequest) (ports.MovieF
 	return filter, nil
 }
 
-func protoGenresToDomain(genres []*moviecollectionv1.Genre, field string) ([]domain.Genre, error) {
+func protoGenresToDomain(genres []*movieservicev1.Genre, field string) ([]domain.Genre, error) {
 	result := make([]domain.Genre, 0, len(genres))
 
 	for _, genre := range genres {
@@ -98,7 +98,7 @@ func protoGenresToDomain(genres []*moviecollectionv1.Genre, field string) ([]dom
 	return result, nil
 }
 
-func protoPeopleToDomain(people []*moviecollectionv1.Person, field string) ([]domain.Person, error) {
+func protoPeopleToDomain(people []*movieservicev1.Person, field string) ([]domain.Person, error) {
 	result := make([]domain.Person, 0, len(people))
 
 	for _, person := range people {
@@ -131,11 +131,11 @@ func protoPeopleToDomain(people []*moviecollectionv1.Person, field string) ([]do
 	return result, nil
 }
 
-func genresToProto(genres []domain.Genre) []*moviecollectionv1.Genre {
-	result := make([]*moviecollectionv1.Genre, 0, len(genres))
+func genresToProto(genres []domain.Genre) []*movieservicev1.Genre {
+	result := make([]*movieservicev1.Genre, 0, len(genres))
 
 	for _, genre := range genres {
-		mapped := &moviecollectionv1.Genre{
+		mapped := &movieservicev1.Genre{
 			Name: strings.TrimSpace(genre.Name),
 		}
 		if genre.ID != uuid.Nil {
@@ -151,11 +151,11 @@ func genresToProto(genres []domain.Genre) []*moviecollectionv1.Genre {
 	return result
 }
 
-func peopleToProto(people []domain.Person) []*moviecollectionv1.Person {
-	result := make([]*moviecollectionv1.Person, 0, len(people))
+func peopleToProto(people []domain.Person) []*movieservicev1.Person {
+	result := make([]*movieservicev1.Person, 0, len(people))
 
 	for _, person := range people {
-		mapped := &moviecollectionv1.Person{
+		mapped := &movieservicev1.Person{
 			Name:    strings.TrimSpace(person.Name),
 			Surname: strings.TrimSpace(person.Surname),
 		}
@@ -176,7 +176,7 @@ func peopleToProto(people []domain.Person) []*moviecollectionv1.Person {
 	return result
 }
 
-func protoToMovie(movie *moviecollectionv1.Movie) (domain.Movie, error) {
+func protoToMovie(movie *movieservicev1.Movie) (domain.Movie, error) {
 	if movie == nil {
 		return domain.Movie{}, status.Error(codes.InvalidArgument, "movie is required")
 	}
@@ -216,8 +216,8 @@ func protoToMovie(movie *moviecollectionv1.Movie) (domain.Movie, error) {
 	return mapped, nil
 }
 
-func movieToProto(movie domain.Movie) *moviecollectionv1.Movie {
-	return &moviecollectionv1.Movie{
+func movieToProto(movie domain.Movie) *movieservicev1.Movie {
+	return &movieservicev1.Movie{
 		MovieId:     movie.MovieID.String(),
 		Title:       movie.Title,
 		Description: movie.Description,

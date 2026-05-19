@@ -1,20 +1,21 @@
-package http
+package grpc
 
 import (
 	"context"
 
-	"movie_collection/api/proto/moviecollectionv1"
+	"movie_collection/api/proto/movieservicev1"
 	"movie_collection/internal/core/usecase"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type MovieHandler struct {
-	moviecollectionv1.UnimplementedMovieCatalogServiceServer
-	moviecollectionv1.UnimplementedMovieCatalogAdminServiceServer
-	moviecollectionv1.UnimplementedWatchlistServiceServer
+	movieservicev1.UnimplementedMovieServiceServer
+	movieservicev1.UnimplementedMovieAdminServiceServer
+	movieservicev1.UnimplementedWatchlistServiceServer
 
 	movies    *usecase.MovieUseCase
 	watchlist *usecase.WatchlistUseCase
@@ -27,7 +28,7 @@ func NewMovieHandler(movies *usecase.MovieUseCase, watchlist *usecase.WatchlistU
 	}
 }
 
-func (h *MovieHandler) GetMovieByID(ctx context.Context, req *moviecollectionv1.GetMovieByIDRequest) (*moviecollectionv1.GetMovieByIDResponse, error) {
+func (h *MovieHandler) GetMovieByID(ctx context.Context, req *movieservicev1.GetMovieByIDRequest) (*movieservicev1.GetMovieByIDResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -42,12 +43,12 @@ func (h *MovieHandler) GetMovieByID(ctx context.Context, req *moviecollectionv1.
 		return nil, mapError(err)
 	}
 
-	return &moviecollectionv1.GetMovieByIDResponse{
+	return &movieservicev1.GetMovieByIDResponse{
 		Movie: movieToProto(*movie),
 	}, nil
 }
 
-func (h *MovieHandler) ListMovies(ctx context.Context, req *moviecollectionv1.ListMoviesRequest) (*moviecollectionv1.ListMoviesResponse, error) {
+func (h *MovieHandler) ListMovies(ctx context.Context, req *movieservicev1.ListMoviesRequest) (*movieservicev1.ListMoviesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -68,8 +69,8 @@ func (h *MovieHandler) ListMovies(ctx context.Context, req *moviecollectionv1.Li
 		return nil, mapError(err)
 	}
 
-	response := &moviecollectionv1.ListMoviesResponse{
-		Movies: make([]*moviecollectionv1.Movie, 0, len(movies)),
+	response := &movieservicev1.ListMoviesResponse{
+		Movies: make([]*movieservicev1.Movie, 0, len(movies)),
 	}
 	for _, movie := range movies {
 		response.Movies = append(response.Movies, movieToProto(movie))
@@ -78,7 +79,7 @@ func (h *MovieHandler) ListMovies(ctx context.Context, req *moviecollectionv1.Li
 	return response, nil
 }
 
-func (h *MovieHandler) UpsertMovie(ctx context.Context, req *moviecollectionv1.UpsertMovieRequest) (*emptypb.Empty, error) {
+func (h *MovieHandler) UpsertMovie(ctx context.Context, req *movieservicev1.UpsertMovieRequest) (*emptypb.Empty, error) {
 	if req == nil || req.GetMovie() == nil {
 		return nil, status.Error(codes.InvalidArgument, "movie is required")
 	}
@@ -88,6 +89,14 @@ func (h *MovieHandler) UpsertMovie(ctx context.Context, req *moviecollectionv1.U
 		return nil, err
 	}
 
+	if movie.Source == "" {
+		movie.Source = "manual"
+		if movie.MovieID == uuid.Nil {
+			movie.MovieID, _ = uuid.NewRandom()
+		}
+		movie.SourceMovieID = movie.MovieID.String()
+	}
+
 	if err := h.movies.UpsertMovieInRepository(ctx, movie); err != nil {
 		return nil, mapError(err)
 	}
@@ -95,7 +104,7 @@ func (h *MovieHandler) UpsertMovie(ctx context.Context, req *moviecollectionv1.U
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) ArchiveMovie(ctx context.Context, req *moviecollectionv1.ArchiveMovieRequest) (*emptypb.Empty, error) {
+func (h *MovieHandler) ArchiveMovie(ctx context.Context, req *movieservicev1.ArchiveMovieRequest) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -112,7 +121,7 @@ func (h *MovieHandler) ArchiveMovie(ctx context.Context, req *moviecollectionv1.
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) RemoveMovie(ctx context.Context, req *moviecollectionv1.RemoveMovieRequest) (*emptypb.Empty, error) {
+func (h *MovieHandler) RemoveMovie(ctx context.Context, req *movieservicev1.RemoveMovieRequest) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -129,7 +138,7 @@ func (h *MovieHandler) RemoveMovie(ctx context.Context, req *moviecollectionv1.R
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) AddMovieToWatchlist(ctx context.Context, req *moviecollectionv1.AddMovieToWatchlistRequest) (*emptypb.Empty, error) {
+func (h *MovieHandler) AddMovieToWatchlist(ctx context.Context, req *movieservicev1.AddMovieToWatchlistRequest) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -150,7 +159,7 @@ func (h *MovieHandler) AddMovieToWatchlist(ctx context.Context, req *moviecollec
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) RemoveMovieFromWatchlist(ctx context.Context, req *moviecollectionv1.RemoveMovieFromWatchlistRequest) (*emptypb.Empty, error) {
+func (h *MovieHandler) RemoveMovieFromWatchlist(ctx context.Context, req *movieservicev1.RemoveMovieFromWatchlistRequest) (*emptypb.Empty, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -171,7 +180,7 @@ func (h *MovieHandler) RemoveMovieFromWatchlist(ctx context.Context, req *moviec
 	return &emptypb.Empty{}, nil
 }
 
-func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *moviecollectionv1.GetUserWatchlistRequest) (*moviecollectionv1.GetUserWatchlistResponse, error) {
+func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *movieservicev1.GetUserWatchlistRequest) (*movieservicev1.GetUserWatchlistResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is required")
 	}
@@ -186,8 +195,8 @@ func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *moviecollectio
 		return nil, mapError(err)
 	}
 
-	response := &moviecollectionv1.GetUserWatchlistResponse{
-		Movies: make([]*moviecollectionv1.Movie, 0, len(movies)),
+	response := &movieservicev1.GetUserWatchlistResponse{
+		Movies: make([]*movieservicev1.Movie, 0, len(movies)),
 	}
 	for _, movie := range movies {
 		response.Movies = append(response.Movies, movieToProto(movie))
