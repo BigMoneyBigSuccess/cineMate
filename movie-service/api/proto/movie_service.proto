@@ -1,17 +1,17 @@
 syntax = "proto3";
 
-package moviecollection.v1;
+package movieservice.v1;
 
-option go_package = "movie_collection/api/proto/moviecollectionv1;moviecollectionv1";
+option go_package = "movie_collection/api/proto/movieservicev1;movieservicev1";
 
 import "google/protobuf/empty.proto";
 
-service MovieCatalogService {
+service MovieService {
   rpc GetMovieByID(GetMovieByIDRequest) returns (GetMovieByIDResponse);
   rpc ListMovies(ListMoviesRequest) returns (ListMoviesResponse);
 }
 
-service MovieCatalogAdminService {
+service MovieAdminService {
   rpc UpsertMovie(UpsertMovieRequest) returns (google.protobuf.Empty);
   rpc ArchiveMovie(ArchiveMovieRequest) returns (google.protobuf.Empty);
   rpc RemoveMovie(RemoveMovieRequest) returns (google.protobuf.Empty);

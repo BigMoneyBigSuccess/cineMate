@@ -1,7 +1,0 @@
-DROP TABLE IF EXISTS watchlists;
-DROP TABLE IF EXISTS movie_directors;
-DROP TABLE IF EXISTS movie_actors;
-DROP TABLE IF EXISTS movie_genres;
-DROP TABLE IF EXISTS persons;
-DROP TABLE IF EXISTS genres;
-DROP TABLE IF EXISTS movies;
