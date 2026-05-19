@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/BigMoneyBigSuccess/cineMate/auth-service/api/proto/authv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package auth.v1;
 
-option go_package = "github.com/BigMoneyBigSuccess/cineMate/auth-service/api/proto/authv1;authv1";
+option go_package = "github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1;authv1";
 
 service AuthService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
@@ -11,16 +11,16 @@ service AuthService {
 }
 
 message RegisterRequest {
-  string email = 1;
+  string email    = 1;
   string password = 2;
 }
 
 message RegisterResponse {
-  string user_id = 1; // uuid string
+  string user_id = 1;
 }
 
 message LoginRequest {
-  string email = 1;
+  string email    = 1;
   string password = 2;
 }
 
@@ -33,7 +33,7 @@ message ValidateTokenRequest {
 }
 
 message ValidateTokenResponse {
-  string user_id = 1; // uuid string
-  bool valid = 2;
-  string error = 3;
+  string user_id = 1;
+  bool   valid   = 2;
+  string error   = 3;
 }

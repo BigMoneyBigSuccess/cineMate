@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"context"
+	"log"
+	"strings"
 
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/ports"
@@ -10,11 +12,12 @@ import (
 )
 
 type AuthUseCase struct {
-	repo ports.UserRepository
+	repo   ports.UserRepository
+	social ports.ProfileCreator
 }
 
-func NewAuthUseCase(repo ports.UserRepository) *AuthUseCase {
-	return &AuthUseCase{repo: repo}
+func NewAuthUseCase(repo ports.UserRepository, social ports.ProfileCreator) *AuthUseCase {
+	return &AuthUseCase{repo: repo, social: social}
 }
 
 func (uc *AuthUseCase) Register(ctx context.Context, email, password string) (uuid.UUID, error) {
@@ -29,7 +32,17 @@ func (uc *AuthUseCase) Register(ctx context.Context, email, password string) (uu
 	}
 
 	user.Password = hashedPassword
-	return uc.repo.CreateUser(ctx, user)
+	id, err := uc.repo.CreateUser(ctx, user)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	username := strings.SplitN(email, "@", 2)[0]
+	if err := uc.social.CreateProfile(ctx, id, username); err != nil { // при регистрации создаем профиль в social service
+		log.Printf("warn: create profile for user %s: %v", id, err)
+	}
+
+	return id, nil
 }
 
 func (uc *AuthUseCase) Login(ctx context.Context, email, password string) (string, error) {

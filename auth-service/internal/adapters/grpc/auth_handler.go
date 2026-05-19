@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	"github.com/BigMoneyBigSuccess/cineMate/auth-service/api/proto/authv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/usecase"
 )
 

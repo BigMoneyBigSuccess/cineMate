@@ -14,9 +14,10 @@ import (
 
 	"database/sql"
 
-	"github.com/BigMoneyBigSuccess/cineMate/auth-service/api/proto/authv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/grpc"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/postgres"
+	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/utils"
@@ -50,8 +51,14 @@ func run() error {
 	}
 	defer db.Close()
 
+	socialClient, err := clients.NewSocialClient(cfg.Social.Host, cfg.Social.Port)
+	if err != nil {
+		return fmt.Errorf("init social client: %w", err)
+	}
+	defer socialClient.Close()
+
 	repo := postgres.NewUserRepository(db)
-	useCase := usecase.NewAuthUseCase(repo)
+	useCase := usecase.NewAuthUseCase(repo, socialClient)
 	authHandler := grpcadapter.NewAuthHandler(useCase)
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcadapter.AuthUnaryInterceptor()))
