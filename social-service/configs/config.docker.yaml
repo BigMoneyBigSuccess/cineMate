@@ -1,0 +1,11 @@
+grpc:
+  addr: ":50053"
+
+postgres:
+  url: "postgres://social:socialpassword@postgres:5432/socialdb?sslmode=disable"
+
+auth:
+  host: "auth-service"
+  port: 50051
+
+shutdown_timeout: 10s
