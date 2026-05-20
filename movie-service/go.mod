@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 module github.com/BigMoneyBigSuccess/cineMate/movie-service
+=======
+module movie_service
+>>>>>>> 26ab2e2 (took out environment variables into .env file & added syncer for fetching films from open api service & took out proto files from movie-service, now they will lie in shared directory)
 
 go 1.26.1
 
@@ -10,9 +14,14 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
+	proto v0.0.0
 )
 
+<<<<<<< HEAD
 replace github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
+=======
+replace proto => ../proto
+>>>>>>> 26ab2e2 (took out environment variables into .env file & added syncer for fetching films from open api service & took out proto files from movie-service, now they will lie in shared directory)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

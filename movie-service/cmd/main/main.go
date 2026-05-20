@@ -20,7 +20,6 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/syncer"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
-
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
