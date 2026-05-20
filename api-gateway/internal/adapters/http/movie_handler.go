@@ -172,6 +172,30 @@ func (h *MovieHandler) GetWatchlist(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *MovieHandler) GetUserWatchlistByID(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
+	userID = strings.TrimSuffix(userID, "/watchlist")
+
+	movies, err := h.movieClient.GetWatchlist(r.Context(), userID)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		writeGRPCErrorResponse(w, st.Code(), st.Message())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"movies": movies, "total": len(movies)})
+}
+
 func parseIntParam(value string, defaultValue int) int {
 	if value == "" {
 		return defaultValue

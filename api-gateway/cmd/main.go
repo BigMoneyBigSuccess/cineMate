@@ -51,6 +51,7 @@ func run() error {
 	
 	authHandler := httpadapter.NewAuthHandler(authClient)
 	movieHandler := httpadapter.NewMovieHandler(movieClient)
+	movieAdminHandler := httpadapter.NewMovieAdminHandler(movieClient)
 	socialHandler := httpadapter.NewSocialHandler(socialClient)
 
 	
@@ -102,15 +103,25 @@ func run() error {
 		case strings.HasSuffix(path, "/following"):
 			socialHandler.GetFollowing(w, r)
 		case strings.HasSuffix(path, "/watchlist"):
-			movieHandler.GetWatchlist(w, r)
-		case strings.Contains(path, "/watchlist/"):
-			movieHandler.AddMovieToWatchlist(w, r)
+			movieHandler.GetUserWatchlistByID(w, r)
+		case strings.HasSuffix(path, "/is-following"):
+			socialHandler.IsFollowing(w, r)
 		default:
 			http.NotFound(w, r)
 		}
 	})
 
-	
+	mux.Handle("/api/v1/admin/movies", authMiddleware(http.HandlerFunc(movieAdminHandler.UpsertMovie)))
+	mux.Handle("/api/v1/admin/movies/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		switch {
+		case strings.HasSuffix(path, "/archive"):
+			movieAdminHandler.ArchiveMovie(w, r)
+		default:
+			movieAdminHandler.RemoveMovie(w, r)
+		}
+	})))
+
 	handler := httpadapter.CORSMiddleware(mux)
 
 	
