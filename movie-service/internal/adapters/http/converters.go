@@ -1,10 +1,11 @@
 package http
 
 import (
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/ports"
 	"strings"
+
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"

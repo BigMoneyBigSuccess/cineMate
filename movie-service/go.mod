@@ -1,4 +1,4 @@
-module github.com/BigMoneyBigSuccess/cineMate/movies-service
+module github.com/BigMoneyBigSuccess/cineMate/movie-service
 
 go 1.26.1
 

@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
 	"strings"
+
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 
 	"github.com/google/uuid"
 )

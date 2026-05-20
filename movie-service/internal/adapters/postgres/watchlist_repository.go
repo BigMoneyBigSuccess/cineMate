@@ -3,8 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/ports"
+
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )

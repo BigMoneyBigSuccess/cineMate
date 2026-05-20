@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/ports"
 	"strings"
 	"time"
+
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )

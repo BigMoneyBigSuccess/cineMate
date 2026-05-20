@@ -2,9 +2,10 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
 	"strings"
 	"testing"
+
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 )
 
 func TestBuildPersonFilterClauseUsesStructuredFields(t *testing.T) {

@@ -3,8 +3,8 @@ package http
 import (
 	"context"
 
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
-	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/usecase"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -195,4 +195,3 @@ func (h *MovieHandler) GetUserWatchlist(ctx context.Context, req *moviecollectio
 
 	return response, nil
 }
-
