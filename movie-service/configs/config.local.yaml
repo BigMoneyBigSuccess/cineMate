@@ -1,0 +1,23 @@
+grpc:
+  addr: ":8080"
+
+postgres:
+  url: ""  # set MOVIE_SERVICE_DATABASE_URL or fill with your local credentials
+
+redis:
+  addr: "localhost:6379"
+  password: ""  # set MOVIE_SERVICE_REDIS_PASSWORD if password is required
+  db: 0
+
+cache:
+  movie_ttl: 30m
+  movie_list_ttl: 2m
+
+shutdown_timeout: 10s
+
+syncer:
+  enabled: true
+  api_key: ""            # set MOVIE_COLLECTION_SYNCER_API_KEY env var or fill here
+  base_url: "https://kinopoiskapiunofficial.tech"
+  daily_request_budget: 5000
+  fetch_description: true
