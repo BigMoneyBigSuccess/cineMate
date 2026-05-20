@@ -10,7 +10,6 @@ require (
 	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
-	proto v0.0.0
 )
 
 replace github.com/BigMoneyBigSuccess/cineMate/proto => ../proto

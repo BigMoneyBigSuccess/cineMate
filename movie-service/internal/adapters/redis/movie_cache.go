@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"movie_service/internal/core/domain"
-	"movie_service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 	"time"
 
 	"github.com/google/uuid"
