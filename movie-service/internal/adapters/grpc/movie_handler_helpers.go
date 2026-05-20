@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"errors"
-<<<<<<< HEAD
 
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 

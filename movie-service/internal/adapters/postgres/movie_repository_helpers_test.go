@@ -2,10 +2,6 @@ package postgres
 
 import (
 	"fmt"
-<<<<<<< HEAD
-=======
-	"movie_service/internal/core/domain"
->>>>>>> 26ab2e2 (took out environment variables into .env file & added syncer for fetching films from open api service & took out proto files from movie-service, now they will lie in shared directory)
 	"strings"
 	"testing"
 
