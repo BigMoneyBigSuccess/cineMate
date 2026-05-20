@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package moviecollection.v1;
+
+option go_package = "movie_collection/api/proto/moviecollectionv1;moviecollectionv1";
+
+import "google/protobuf/empty.proto";
+
+service MovieCatalogService {
+  rpc GetMovieByID(GetMovieByIDRequest) returns (GetMovieByIDResponse);
+  rpc ListMovies(ListMoviesRequest) returns (ListMoviesResponse);
+}
+
+service MovieCatalogAdminService {
+  rpc UpsertMovie(UpsertMovieRequest) returns (google.protobuf.Empty);
+  rpc ArchiveMovie(ArchiveMovieRequest) returns (google.protobuf.Empty);
+  rpc RemoveMovie(RemoveMovieRequest) returns (google.protobuf.Empty);
+}
+
+service WatchlistService {
+  rpc AddMovieToWatchlist(AddMovieToWatchlistRequest) returns (google.protobuf.Empty);
+  rpc RemoveMovieFromWatchlist(RemoveMovieFromWatchlistRequest) returns (google.protobuf.Empty);
+  rpc GetUserWatchlist(GetUserWatchlistRequest) returns (GetUserWatchlistResponse);
+}
+
+message Movie {
+  string movie_id = 1;
+  string title = 2;
+  string description = 3;
+  repeated Genre genres = 4;
+  repeated Person actors = 5;
+  repeated Person directors = 6;
+  string country = 7;
+  int32 release_year = 8;
+  float imdb_rating = 9;
+}
+
+message Genre {
+  string id = 1;
+  string name = 2;
+}
+
+message Person {
+  string id = 1;
+  string name = 2;
+  string surname = 3;
+  optional int32 birth_year = 4;
+}
+
+message GetMovieByIDRequest {
+  string movie_id = 1;
+}
+
+message GetMovieByIDResponse {
+  Movie movie = 1;
+}
+
+message ListMoviesRequest {
+  string query = 1;
+  repeated Genre genres = 2;
+  repeated Person actors = 3;
+  repeated Person directors = 4;
+  optional string country = 5;
+  optional int32 release_year_from = 6;
+  optional int32 release_year_to = 7;
+  optional float imdb_rating_from = 8;
+  optional float imdb_rating_to = 9;
+  int32 limit = 10;
+  int32 offset = 11;
+  string sort_by = 12;
+  string sort_order = 13;
+  bool include_archived = 14;
+}
+
+message ListMoviesResponse {
+  repeated Movie movies = 1;
+}
+
+message UpsertMovieRequest {
+  Movie movie = 1;
+}
+
+message ArchiveMovieRequest {
+  string movie_id = 1;
+}
+
+message RemoveMovieRequest {
+  string movie_id = 1;
+}
+
+message AddMovieToWatchlistRequest {
+  string user_id = 1;
+  string movie_id = 2;
+}
+
+message RemoveMovieFromWatchlistRequest {
+  string user_id = 1;
+  string movie_id = 2;
+}
+
+message GetUserWatchlistRequest {
+  string user_id = 1;
+}
+
+message GetUserWatchlistResponse {
+  repeated Movie movies = 1;
+}
