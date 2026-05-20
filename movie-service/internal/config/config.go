@@ -13,7 +13,16 @@ type Config struct {
 	Postgres        PostgresConfig `yaml:"postgres"`
 	Redis           RedisConfig    `yaml:"redis"`
 	Cache           CacheConfig    `yaml:"cache"`
+	Syncer          SyncerConfig   `yaml:"syncer"`
 	ShutdownTimeout time.Duration  `yaml:"shutdown_timeout"`
+}
+
+type SyncerConfig struct {
+	Enabled            bool   `yaml:"enabled"`
+	APIKey             string `yaml:"api_key"`
+	BaseURL            string `yaml:"base_url"`
+	DailyRequestBudget int    `yaml:"daily_request_budget"`
+	FetchDescription   bool   `yaml:"fetch_description"`
 }
 
 type GRPCConfig struct {
@@ -44,6 +53,11 @@ func Default() Config {
 			MovieTTL:     30 * time.Minute,
 			MovieListTTL: 2 * time.Minute,
 		},
+		Syncer: SyncerConfig{
+			BaseURL:            "https://kinopoiskapiunofficial.tech",
+			DailyRequestBudget: 500,
+			FetchDescription:   true,
+		},
 		ShutdownTimeout: 10 * time.Second,
 	}
 }
@@ -62,6 +76,12 @@ func (c Config) Validate() error {
 		return errors.New("shutdown_timeout must be greater than zero")
 	case c.Redis.DB < 0:
 		return errors.New("redis.db must be non-negative")
+	case c.Syncer.Enabled && c.Syncer.APIKey == "":
+		return errors.New("syncer.api_key is required when syncer is enabled")
+	case c.Syncer.Enabled && c.Syncer.DailyRequestBudget <= 0:
+		return errors.New("syncer.daily_request_budget must be positive when syncer is enabled")
+	case c.Syncer.Enabled && c.Syncer.BaseURL == "":
+		return errors.New("syncer.base_url is required when syncer is enabled")
 	default:
 		return nil
 	}

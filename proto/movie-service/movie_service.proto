@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package movieservice.v1;
 
-option go_package = "movie_collection/api/proto/movieservicev1;movieservicev1";
+option go_package = "proto/movie-service/movieservicev1;movieservicev1";
 
 import "google/protobuf/empty.proto";
 

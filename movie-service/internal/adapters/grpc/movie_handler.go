@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	"movie_collection/api/proto/movieservicev1"
-	"movie_collection/internal/core/usecase"
+	"proto/movie-service/movieservicev1"
+	"movie_service/internal/core/usecase"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"

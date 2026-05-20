@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"context"
-	"movie_collection/internal/core/domain"
-	"movie_collection/internal/core/ports"
+	"movie_service/internal/core/domain"
+	"movie_service/internal/core/ports"
 
 	"github.com/google/uuid"
 )

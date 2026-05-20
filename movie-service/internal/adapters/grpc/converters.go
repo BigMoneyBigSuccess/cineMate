@@ -1,9 +1,9 @@
 package grpc
 
 import (
-	"movie_collection/api/proto/movieservicev1"
-	"movie_collection/internal/core/domain"
-	"movie_collection/internal/core/ports"
+	"proto/movie-service/movieservicev1"
+	"movie_service/internal/core/domain"
+	"movie_service/internal/core/ports"
 	"strings"
 
 	"github.com/google/uuid"

@@ -50,45 +50,48 @@ func loadFromFile(path string, cfg *Config) error {
 }
 
 func overrideFromEnv(cfg *Config) error {
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_GRPC_ADDR")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_GRPC_ADDR")); value != "" {
 		cfg.GRPC.Addr = value
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_DATABASE_URL")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_DATABASE_URL")); value != "" {
 		cfg.Postgres.URL = value
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_REDIS_ADDR")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_REDIS_ADDR")); value != "" {
 		cfg.Redis.Addr = value
 	}
-	if value, ok := os.LookupEnv("MOVIE_COLLECTION_REDIS_PASSWORD"); ok {
+	if value, ok := os.LookupEnv("MOVIE_SERVICE_REDIS_PASSWORD"); ok {
 		cfg.Redis.Password = value
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_REDIS_DB")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_REDIS_DB")); value != "" {
 		parsed, err := strconv.Atoi(value)
 		if err != nil {
-			return fmt.Errorf("parse MOVIE_COLLECTION_REDIS_DB: %w", err)
+			return fmt.Errorf("parse MOVIE_SERVICE_REDIS_DB: %w", err)
 		}
 		cfg.Redis.DB = parsed
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_MOVIE_CACHE_TTL")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_MOVIE_CACHE_TTL")); value != "" {
 		parsed, err := time.ParseDuration(value)
 		if err != nil {
-			return fmt.Errorf("parse MOVIE_COLLECTION_MOVIE_CACHE_TTL: %w", err)
+			return fmt.Errorf("parse MOVIE_SERVICE_MOVIE_CACHE_TTL: %w", err)
 		}
 		cfg.Cache.MovieTTL = parsed
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_MOVIE_LIST_CACHE_TTL")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_MOVIE_LIST_CACHE_TTL")); value != "" {
 		parsed, err := time.ParseDuration(value)
 		if err != nil {
-			return fmt.Errorf("parse MOVIE_COLLECTION_MOVIE_LIST_CACHE_TTL: %w", err)
+			return fmt.Errorf("parse MOVIE_SERVICE_MOVIE_LIST_CACHE_TTL: %w", err)
 		}
 		cfg.Cache.MovieListTTL = parsed
 	}
-	if value := strings.TrimSpace(os.Getenv("MOVIE_COLLECTION_SHUTDOWN_TIMEOUT")); value != "" {
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SHUTDOWN_TIMEOUT")); value != "" {
 		parsed, err := time.ParseDuration(value)
 		if err != nil {
-			return fmt.Errorf("parse MOVIE_COLLECTION_SHUTDOWN_TIMEOUT: %w", err)
+			return fmt.Errorf("parse MOVIE_SERVICE_SHUTDOWN_TIMEOUT: %w", err)
 		}
 		cfg.ShutdownTimeout = parsed
+	}
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SYNCER_API_KEY")); value != "" {
+		cfg.Syncer.APIKey = value
 	}
 
 	return nil

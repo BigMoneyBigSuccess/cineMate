@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"movie_collection/internal/config"
+	"movie_service/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

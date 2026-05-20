@@ -1,4 +1,4 @@
-module movie_collection
+module movie_service
 
 go 1.26.0
 
@@ -9,7 +9,10 @@ require (
 	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/yaml.v3 v3.0.1
+	proto v0.0.0
 )
+
+replace proto => ../proto
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

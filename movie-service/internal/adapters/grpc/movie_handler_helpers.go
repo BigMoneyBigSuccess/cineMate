@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
-	"movie_collection/internal/core/domain"
+	"movie_service/internal/core/domain"
 
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"

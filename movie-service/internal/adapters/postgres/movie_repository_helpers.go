@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"movie_collection/internal/core/domain"
+	"movie_service/internal/core/domain"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

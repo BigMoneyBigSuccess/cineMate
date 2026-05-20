@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	"movie_collection/internal/core/domain"
+	"movie_service/internal/core/domain"
 
 	"github.com/google/uuid"
 )

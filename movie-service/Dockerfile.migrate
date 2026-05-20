@@ -4,8 +4,8 @@ WORKDIR /app
 
 RUN apk add --no-cache bash
 
-COPY migrations /app/migrations
-COPY scripts /app/scripts
+COPY movie-service/migrations /app/migrations
+COPY movie-service/scripts /app/scripts
 
 RUN chmod +x /app/scripts/*.sh
 
