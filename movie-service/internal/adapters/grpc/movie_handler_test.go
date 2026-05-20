@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"movie_service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"

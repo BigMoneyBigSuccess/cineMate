@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
@@ -20,7 +20,7 @@ import (
 // MovieCollectionClient implements ports.MovieRepository by delegating to the
 // movie-collection service over gRPC.
 type MovieCollectionClient struct {
-	client  moviecollectionv1.MovieCatalogServiceClient
+	client  movieservicev1.MovieServiceClient
 	timeout time.Duration
 }
 
@@ -36,7 +36,7 @@ func NewConn(cfg config.MovieCollectionConfig) (*grpc.ClientConn, error) {
 
 func New(conn *grpc.ClientConn, timeout time.Duration) *MovieCollectionClient {
 	return &MovieCollectionClient{
-		client:  moviecollectionv1.NewMovieCatalogServiceClient(conn),
+		client:  movieservicev1.NewMovieServiceClient(conn),
 		timeout: timeout,
 	}
 }
@@ -45,7 +45,7 @@ func (c *MovieCollectionClient) GetMovieByID(ctx context.Context, id uuid.UUID) 
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	resp, err := c.client.GetMovieByID(ctx, &moviecollectionv1.GetMovieByIDRequest{
+	resp, err := c.client.GetMovieByID(ctx, &movieservicev1.GetMovieByIDRequest{
 		MovieId: id.String(),
 	})
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/google/uuid"
 )
 
 func TestBuildPersonFilterClauseUsesStructuredFields(t *testing.T) {

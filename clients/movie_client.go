@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type MovieClient struct {
-	catalogClient      moviecollectionv1.MovieCatalogServiceClient
-	catalogAdminClient moviecollectionv1.MovieCatalogAdminServiceClient
-	watchlistClient    moviecollectionv1.WatchlistServiceClient
+	catalogClient      movieservicev1.MovieServiceClient
+	catalogAdminClient movieservicev1.MovieAdminServiceClient
+	watchlistClient    movieservicev1.WatchlistServiceClient
 	conn               *grpc.ClientConn
 }
 
@@ -23,22 +23,22 @@ func NewMovieClient(host string, port int) (*MovieClient, error) {
 		return nil, fmt.Errorf("connect to movies service at %s: %w", addr, err)
 	}
 	return &MovieClient{
-		catalogClient:      moviecollectionv1.NewMovieCatalogServiceClient(conn),
-		catalogAdminClient: moviecollectionv1.NewMovieCatalogAdminServiceClient(conn),
-		watchlistClient:    moviecollectionv1.NewWatchlistServiceClient(conn),
+		catalogClient:      movieservicev1.NewMovieServiceClient(conn),
+		catalogAdminClient: movieservicev1.NewMovieAdminServiceClient(conn),
+		watchlistClient:    movieservicev1.NewWatchlistServiceClient(conn),
 		conn:               conn,
 	}, nil
 }
 
-func (mc *MovieClient) GetMovieByID(ctx context.Context, movieID string) (*moviecollectionv1.Movie, error) {
-	resp, err := mc.catalogClient.GetMovieByID(ctx, &moviecollectionv1.GetMovieByIDRequest{MovieId: movieID})
+func (mc *MovieClient) GetMovieByID(ctx context.Context, movieID string) (*movieservicev1.Movie, error) {
+	resp, err := mc.catalogClient.GetMovieByID(ctx, &movieservicev1.GetMovieByIDRequest{MovieId: movieID})
 	if err != nil {
 		return nil, err
 	}
 	return resp.Movie, nil
 }
 
-func (mc *MovieClient) ListMovies(ctx context.Context, req *moviecollectionv1.ListMoviesRequest) ([]*moviecollectionv1.Movie, error) {
+func (mc *MovieClient) ListMovies(ctx context.Context, req *movieservicev1.ListMoviesRequest) ([]*movieservicev1.Movie, error) {
 	resp, err := mc.catalogClient.ListMovies(ctx, req)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (mc *MovieClient) ListMovies(ctx context.Context, req *moviecollectionv1.Li
 }
 
 func (mc *MovieClient) AddMovieToWatchlist(ctx context.Context, userID, movieID string) error {
-	_, err := mc.watchlistClient.AddMovieToWatchlist(ctx, &moviecollectionv1.AddMovieToWatchlistRequest{
+	_, err := mc.watchlistClient.AddMovieToWatchlist(ctx, &movieservicev1.AddMovieToWatchlistRequest{
 		UserId:  userID,
 		MovieId: movieID,
 	})
@@ -55,15 +55,15 @@ func (mc *MovieClient) AddMovieToWatchlist(ctx context.Context, userID, movieID 
 }
 
 func (mc *MovieClient) RemoveMovieFromWatchlist(ctx context.Context, userID, movieID string) error {
-	_, err := mc.watchlistClient.RemoveMovieFromWatchlist(ctx, &moviecollectionv1.RemoveMovieFromWatchlistRequest{
+	_, err := mc.watchlistClient.RemoveMovieFromWatchlist(ctx, &movieservicev1.RemoveMovieFromWatchlistRequest{
 		UserId:  userID,
 		MovieId: movieID,
 	})
 	return err
 }
 
-func (mc *MovieClient) GetWatchlist(ctx context.Context, userID string) ([]*moviecollectionv1.Movie, error) {
-	resp, err := mc.watchlistClient.GetUserWatchlist(ctx, &moviecollectionv1.GetUserWatchlistRequest{UserId: userID})
+func (mc *MovieClient) GetWatchlist(ctx context.Context, userID string) ([]*movieservicev1.Movie, error) {
+	resp, err := mc.watchlistClient.GetUserWatchlist(ctx, &movieservicev1.GetUserWatchlistRequest{UserId: userID})
 	if err != nil {
 		return nil, err
 	}

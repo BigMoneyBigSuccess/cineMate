@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"movie_service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 )
 
 // movieUpserter is satisfied by usecase.MovieUseCase.

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"movie_service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 )
 
 const maxActors = 15

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"movie_service/internal/config"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

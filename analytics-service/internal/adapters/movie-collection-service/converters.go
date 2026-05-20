@@ -3,14 +3,14 @@ package moviecollection
 import (
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )
 
-func protoToSnapshot(m *moviecollectionv1.Movie) (*domain.MovieSnapshot, error) {
+func protoToSnapshot(m *movieservicev1.Movie) (*domain.MovieSnapshot, error) {
 	if m == nil {
 		return nil, fmt.Errorf("%w: nil movie", domain.ErrInvalidMovieSnapshot)
 	}
@@ -46,7 +46,7 @@ func protoToSnapshot(m *moviecollectionv1.Movie) (*domain.MovieSnapshot, error) 
 	}, nil
 }
 
-func protoToGenres(pg []*moviecollectionv1.Genre) ([]domain.Genre, error) {
+func protoToGenres(pg []*movieservicev1.Genre) ([]domain.Genre, error) {
 	genres := make([]domain.Genre, len(pg))
 	for i, g := range pg {
 		id, err := uuid.Parse(g.GetId())
@@ -58,7 +58,7 @@ func protoToGenres(pg []*moviecollectionv1.Genre) ([]domain.Genre, error) {
 	return genres, nil
 }
 
-func protoToPersons(pp []*moviecollectionv1.Person) ([]domain.Person, error) {
+func protoToPersons(pp []*movieservicev1.Person) ([]domain.Person, error) {
 	persons := make([]domain.Person, len(pp))
 	for i, p := range pp {
 		id, err := uuid.Parse(p.GetId())
@@ -79,8 +79,8 @@ func protoToPersons(pp []*moviecollectionv1.Person) ([]domain.Person, error) {
 	return persons, nil
 }
 
-func filterToProto(f ports.MovieFilter) *moviecollectionv1.ListMoviesRequest {
-	req := &moviecollectionv1.ListMoviesRequest{
+func filterToProto(f ports.MovieFilter) *movieservicev1.ListMoviesRequest {
+	req := &movieservicev1.ListMoviesRequest{
 		Query:           f.Query,
 		Country:         f.Country,
 		ReleaseYearFrom: f.ReleaseYearFrom,
@@ -95,7 +95,7 @@ func filterToProto(f ports.MovieFilter) *moviecollectionv1.ListMoviesRequest {
 	}
 
 	for _, g := range f.Genres {
-		req.Genres = append(req.Genres, &moviecollectionv1.Genre{
+		req.Genres = append(req.Genres, &movieservicev1.Genre{
 			Id:   g.ID.String(),
 			Name: g.Name,
 		})
@@ -110,8 +110,8 @@ func filterToProto(f ports.MovieFilter) *moviecollectionv1.ListMoviesRequest {
 	return req
 }
 
-func domainPersonToProto(p domain.Person) *moviecollectionv1.Person {
-	proto := &moviecollectionv1.Person{
+func domainPersonToProto(p domain.Person) *movieservicev1.Person {
+	proto := &movieservicev1.Person{
 		Id:      p.ID.String(),
 		Name:    p.Name,
 		Surname: p.Surname,

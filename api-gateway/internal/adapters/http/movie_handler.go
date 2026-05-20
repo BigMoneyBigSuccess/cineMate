@@ -8,7 +8,7 @@ import (
 
 	"github.com/BigMoneyBigSuccess/cineMate/clients"
 
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 	"google.golang.org/grpc/status"
 )
 
@@ -55,7 +55,7 @@ func (h *MovieHandler) ListMovies(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := r.URL.Query()
-	req := &moviecollectionv1.ListMoviesRequest{
+	req := &movieservicev1.ListMoviesRequest{
 		Query:           query.Get("q"),
 		Limit:           int32(parseIntParam(query.Get("limit"), 20)),
 		Offset:          int32(parseIntParam(query.Get("offset"), 0)),
