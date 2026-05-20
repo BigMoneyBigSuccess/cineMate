@@ -2,12 +2,12 @@ package grpc
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
 	"movie_service/internal/core/domain"
 
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -53,8 +53,13 @@ func TestMapError(t *testing.T) {
 			code: codes.DeadlineExceeded,
 		},
 		{
-			name: "sql no rows",
-			err:  sql.ErrNoRows,
+			name: "pgx no rows",
+			err:  pgx.ErrNoRows,
+			code: codes.NotFound,
+		},
+		{
+			name: "wrapped pgx no rows",
+			err:  errors.Join(errors.New("query failed"), pgx.ErrNoRows),
 			code: codes.NotFound,
 		},
 		{

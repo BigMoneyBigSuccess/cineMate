@@ -1,10 +1,11 @@
 package grpc
 
 import (
-	"proto/movie-service/movieservicev1"
+	"strings"
+
 	"movie_service/internal/core/domain"
 	"movie_service/internal/core/ports"
-	"strings"
+	"proto/movie-service/movieservicev1"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"

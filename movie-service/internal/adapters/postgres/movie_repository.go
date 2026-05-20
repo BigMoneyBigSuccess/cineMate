@@ -107,8 +107,12 @@ func (r *MovieRepository) ArchiveMovie(ctx context.Context, id uuid.UUID) error 
 func (r *MovieRepository) RemoveMovie(ctx context.Context, id uuid.UUID) error {
 	const q = `DELETE FROM movies WHERE id = $1`
 
-	if _, err := r.db.Exec(ctx, q, id); err != nil {
+	tag, err := r.db.Exec(ctx, q, id)
+	if err != nil {
 		return fmt.Errorf("remove movie: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
 	}
 	return nil
 }

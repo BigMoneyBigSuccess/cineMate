@@ -7,9 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
+
 	"movie_service/internal/core/domain"
 	"movie_service/internal/core/ports"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"

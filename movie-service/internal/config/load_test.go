@@ -84,14 +84,14 @@ shutdown_timeout: 15s
 		t.Fatalf("write config file: %v", err)
 	}
 
-	t.Setenv("MOVIE_COLLECTION_GRPC_ADDR", ":9191")
-	t.Setenv("MOVIE_COLLECTION_DATABASE_URL", "postgres://override:override@db:5432/override?sslmode=disable")
-	t.Setenv("MOVIE_COLLECTION_REDIS_ADDR", "redis:6379")
-	t.Setenv("MOVIE_COLLECTION_REDIS_PASSWORD", "override-secret")
-	t.Setenv("MOVIE_COLLECTION_REDIS_DB", "4")
-	t.Setenv("MOVIE_COLLECTION_MOVIE_CACHE_TTL", "50m")
-	t.Setenv("MOVIE_COLLECTION_MOVIE_LIST_CACHE_TTL", "4m")
-	t.Setenv("MOVIE_COLLECTION_SHUTDOWN_TIMEOUT", "20s")
+	t.Setenv("MOVIE_SERVICE_GRPC_ADDR", ":9191")
+	t.Setenv("MOVIE_SERVICE_DATABASE_URL", "postgres://override:override@db:5432/override?sslmode=disable")
+	t.Setenv("MOVIE_SERVICE_REDIS_ADDR", "redis:6379")
+	t.Setenv("MOVIE_SERVICE_REDIS_PASSWORD", "override-secret")
+	t.Setenv("MOVIE_SERVICE_REDIS_DB", "4")
+	t.Setenv("MOVIE_SERVICE_MOVIE_CACHE_TTL", "50m")
+	t.Setenv("MOVIE_SERVICE_MOVIE_LIST_CACHE_TTL", "4m")
+	t.Setenv("MOVIE_SERVICE_SHUTDOWN_TIMEOUT", "20s")
 
 	cfg, err := Load(configPath)
 	if err != nil {
@@ -128,14 +128,14 @@ func clearMovieCollectionEnv(t *testing.T) {
 	t.Helper()
 
 	keys := []string{
-		"MOVIE_COLLECTION_GRPC_ADDR",
-		"MOVIE_COLLECTION_DATABASE_URL",
-		"MOVIE_COLLECTION_REDIS_ADDR",
-		"MOVIE_COLLECTION_REDIS_PASSWORD",
-		"MOVIE_COLLECTION_REDIS_DB",
-		"MOVIE_COLLECTION_MOVIE_CACHE_TTL",
-		"MOVIE_COLLECTION_MOVIE_LIST_CACHE_TTL",
-		"MOVIE_COLLECTION_SHUTDOWN_TIMEOUT",
+		"MOVIE_SERVICE_GRPC_ADDR",
+		"MOVIE_SERVICE_DATABASE_URL",
+		"MOVIE_SERVICE_REDIS_ADDR",
+		"MOVIE_SERVICE_REDIS_PASSWORD",
+		"MOVIE_SERVICE_REDIS_DB",
+		"MOVIE_SERVICE_MOVIE_CACHE_TTL",
+		"MOVIE_SERVICE_MOVIE_LIST_CACHE_TTL",
+		"MOVIE_SERVICE_SHUTDOWN_TIMEOUT",
 	}
 
 	original := make(map[string]*string, len(keys))
