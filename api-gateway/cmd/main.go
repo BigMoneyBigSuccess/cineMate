@@ -13,7 +13,7 @@ import (
 	"time"
 
 	httpadapter "github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/adapters/http"
-	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/config"
 	"strings"
 )
@@ -30,23 +30,19 @@ func run() error {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	
-	authClient, err := clients.NewAuthClient(ctx, cfg.Auth.Host, cfg.Auth.Port)
+	authClient, err := clients.NewAuthClient(cfg.Auth.Host, cfg.Auth.Port)
 	if err != nil {
 		return fmt.Errorf("init auth client: %w", err)
 	}
 	defer authClient.Close()
 
-	movieClient, err := clients.NewMovieClient(ctx, cfg.Movies.Host, cfg.Movies.Port)
+	movieClient, err := clients.NewMovieClient(cfg.Movies.Host, cfg.Movies.Port)
 	if err != nil {
 		return fmt.Errorf("init movie client: %w", err)
 	}
 	defer movieClient.Close()
 
-	socialClient, err := clients.NewSocialClient(ctx, cfg.Social.Host, cfg.Social.Port)
+	socialClient, err := clients.NewSocialClient(cfg.Social.Host, cfg.Social.Port)
 	if err != nil {
 		return fmt.Errorf("init social client: %w", err)
 	}
@@ -106,13 +102,9 @@ func run() error {
 		case strings.HasSuffix(path, "/following"):
 			socialHandler.GetFollowing(w, r)
 		case strings.HasSuffix(path, "/watchlist"):
-			socialHandler.GetWatchlist(w, r)
-		case strings.HasSuffix(path, "/watched"):
-			socialHandler.GetWatched(w, r)
+			movieHandler.GetWatchlist(w, r)
 		case strings.Contains(path, "/watchlist/"):
-			socialHandler.WatchlistEntry(w, r)
-		case strings.Contains(path, "/watched/"):
-			socialHandler.WatchedEntry(w, r)
+			movieHandler.AddMovieToWatchlist(w, r)
 		default:
 			http.NotFound(w, r)
 		}

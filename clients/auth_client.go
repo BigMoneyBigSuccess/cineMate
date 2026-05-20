@@ -24,6 +24,32 @@ func NewAuthClient(host string, port int) (*AuthClient, error) {
 	return &AuthClient{client: authv1.NewAuthServiceClient(conn), conn: conn}, nil
 }
 
+func (c *AuthClient) Register(ctx context.Context, email, password string) (uuid.UUID, error) {
+	resp, err := c.client.Register(ctx, &authv1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+	if err != nil {
+		return uuid.Nil, err
+	}
+	userID, err := uuid.Parse(resp.UserId)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user ID format: %w", err)
+	}
+	return userID, nil
+}
+
+func (c *AuthClient) Login(ctx context.Context, email, password string) (string, error) {
+	resp, err := c.client.Login(ctx, &authv1.LoginRequest{
+		Email:    email,
+		Password: password,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
+
 func (c *AuthClient) ValidateToken(ctx context.Context, token string) (uuid.UUID, bool, string) {
 	resp, err := c.client.ValidateToken(ctx, &authv1.ValidateTokenRequest{Token: token})
 	if err != nil {

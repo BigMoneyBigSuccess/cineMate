@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/social-service/api/proto/socialv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -15,7 +16,7 @@ type SocialClient struct {
 	conn   *grpc.ClientConn
 }
 
-func NewSocialClient(ctx context.Context, host string, port int) (*SocialClient, error) {
+func NewSocialClient(host string, port int) (*SocialClient, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -30,6 +31,14 @@ func withToken(ctx context.Context, token string) context.Context {
 	return metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 }
 
+func (c *SocialClient) CreateProfile(ctx context.Context, userID uuid.UUID, username string) error {
+	_, err := c.client.CreateProfile(ctx, &socialv1.CreateProfileRequest{
+		UserId:   userID.String(),
+		Username: username,
+	})
+	return err
+}
+
 func (c *SocialClient) GetProfile(ctx context.Context, userID string) (*socialv1.UserProfile, error) {
 	resp, err := c.client.GetProfile(ctx, &socialv1.GetProfileRequest{UserId: userID})
 	if err != nil {
@@ -38,11 +47,10 @@ func (c *SocialClient) GetProfile(ctx context.Context, userID string) (*socialv1
 	return resp.Profile, nil
 }
 
-func (c *SocialClient) UpdateProfile(ctx context.Context, token, username, avatarURL, bio string) error {
+func (c *SocialClient) UpdateProfile(ctx context.Context, token, username, bio string) error {
 	_, err := c.client.UpdateProfile(withToken(ctx, token), &socialv1.UpdateProfileRequest{
-		Username:  username,
-		AvatarUrl: avatarURL,
-		Bio:       bio,
+		Username: username,
+		Bio:      bio,
 	})
 	return err
 }
@@ -71,32 +79,4 @@ func (c *SocialClient) IsFollowing(ctx context.Context, followerID, followedID s
 		return false, err
 	}
 	return resp.IsFollowing, nil
-}
-
-func (c *SocialClient) AddToWatchlist(ctx context.Context, token, movieID string) error {
-	_, err := c.client.AddToWatchlist(withToken(ctx, token), &socialv1.MovieListEntryRequest{MovieId: movieID})
-	return err
-}
-
-func (c *SocialClient) RemoveFromWatchlist(ctx context.Context, token, movieID string) error {
-	_, err := c.client.RemoveFromWatchlist(withToken(ctx, token), &socialv1.MovieListEntryRequest{MovieId: movieID})
-	return err
-}
-
-func (c *SocialClient) GetWatchlist(ctx context.Context, userID string, limit, offset int32) (*socialv1.GetMovieListResponse, error) {
-	return c.client.GetWatchlist(ctx, &socialv1.GetMovieListRequest{UserId: userID, Limit: limit, Offset: offset})
-}
-
-func (c *SocialClient) MarkWatched(ctx context.Context, token, movieID string) error {
-	_, err := c.client.MarkWatched(withToken(ctx, token), &socialv1.MovieListEntryRequest{MovieId: movieID})
-	return err
-}
-
-func (c *SocialClient) UnmarkWatched(ctx context.Context, token, movieID string) error {
-	_, err := c.client.UnmarkWatched(withToken(ctx, token), &socialv1.MovieListEntryRequest{MovieId: movieID})
-	return err
-}
-
-func (c *SocialClient) GetWatched(ctx context.Context, userID string, limit, offset int32) (*socialv1.GetMovieListResponse, error) {
-	return c.client.GetWatched(ctx, &socialv1.GetMovieListRequest{UserId: userID, Limit: limit, Offset: offset})
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/grpc"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/postgres"
-	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/utils"

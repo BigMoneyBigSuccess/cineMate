@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 
-	"github.com/BigMoneyBigSuccess/cineMate/collections-service/api/proto/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
 	"google.golang.org/grpc/status"
 )
 
@@ -26,7 +26,6 @@ func (h *MovieHandler) GetMovieByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/movies/"), "/")
 	if len(parts) == 0 || parts[0] == "" {
 		http.Error(w, "movie id is required", http.StatusBadRequest)
@@ -55,7 +54,6 @@ func (h *MovieHandler) ListMovies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	query := r.URL.Query()
 	req := &moviecollectionv1.ListMoviesRequest{
 		Query:           query.Get("q"),
@@ -66,7 +64,6 @@ func (h *MovieHandler) ListMovies(w http.ResponseWriter, r *http.Request) {
 		IncludeArchived: parseIntParam(query.Get("include_archived"), 0) == 1,
 	}
 
-	
 	if yearFrom := query.Get("release_year_from"); yearFrom != "" {
 		year := int32(parseIntParam(yearFrom, 0))
 		req.ReleaseYearFrom = &year
@@ -76,7 +73,6 @@ func (h *MovieHandler) ListMovies(w http.ResponseWriter, r *http.Request) {
 		req.ReleaseYearTo = &year
 	}
 
-	
 	if ratingFrom := query.Get("imdb_rating_from"); ratingFrom != "" {
 		rating := float32(parseFloatParam(ratingFrom, 0))
 		req.ImdbRatingFrom = &rating

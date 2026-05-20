@@ -1,18 +1,18 @@
-module movie_service
+module github.com/BigMoneyBigSuccess/cineMate/movie-service
 
-go 1.26.0
+go 1.26.1
 
 require (
+	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.9.2
+	github.com/lib/pq v1.10.9
 	github.com/redis/go-redis/v9 v9.5.1
-	google.golang.org/grpc v1.72.2
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.79.3
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
-	proto v0.0.0
 )
 
-replace proto => ../proto
+replace github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

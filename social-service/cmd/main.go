@@ -17,7 +17,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/social-service/internal/adapters/grpc"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/adapters/postgres"
-	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/usecase"
 	_ "github.com/lib/pq"

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 )
 
 func AuthMiddleware(authClient *clients.AuthClient, requiredAuth bool) func(http.Handler) http.Handler {

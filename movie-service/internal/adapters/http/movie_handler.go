@@ -3,8 +3,8 @@ package http
 import (
 	"context"
 
-	"movie_collection/api/proto/moviecollectionv1"
-	"movie_collection/internal/core/usecase"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/usecase"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

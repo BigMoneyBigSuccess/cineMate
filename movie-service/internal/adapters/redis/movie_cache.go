@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	"movie_service/internal/core/domain"
-	"movie_service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"

@@ -7,19 +7,19 @@ import (
 	"strings"
 	"time"
 
-	"movie_service/internal/core/domain"
-	"movie_service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var _ ports.MovieRepository = (*MovieRepository)(nil)
+
 type MovieRepository struct {
-	db *pgxpool.Pool
+	db *sql.DB
 }
 
-func NewMovieRepository(db *pgxpool.Pool) *MovieRepository {
+func NewMovieRepository(db *sql.DB) *MovieRepository {
 	return &MovieRepository{db: db}
 }
 

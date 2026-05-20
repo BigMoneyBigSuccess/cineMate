@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

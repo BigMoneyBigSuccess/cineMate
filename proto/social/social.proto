@@ -84,4 +84,3 @@ message IsFollowingRequest {
 message IsFollowingResponse {
   bool is_following = 1;
 }
-

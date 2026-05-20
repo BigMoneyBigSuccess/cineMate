@@ -3,8 +3,8 @@ package engine
 import (
 	"context"
 
-	"analytics/internal/core/domain"
-	"analytics/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
 )
 
 // candidatesByAI is a stub for a future AI-powered recommendation.

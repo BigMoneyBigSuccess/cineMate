@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
