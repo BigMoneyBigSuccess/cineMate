@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"movie_collection/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
 	"strings"
 
 	"github.com/google/uuid"

@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"strings"
 
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/domain"
@@ -38,8 +38,8 @@ func (uc *AuthUseCase) Register(ctx context.Context, email, password string) (uu
 	}
 
 	username := strings.SplitN(email, "@", 2)[0]
-	if err := uc.social.CreateProfile(ctx, id, username); err != nil { // при регистрации создаем профиль в social service
-		log.Printf("warn: create profile for user %s: %v", id, err)
+	if err := uc.social.CreateProfile(ctx, id, username); err != nil {
+		return uuid.Nil, fmt.Errorf("create social profile: %w", err)
 	}
 
 	return id, nil

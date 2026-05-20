@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"analytics/internal/core/domain"
-	"analytics/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package moviecollection.v1;
 
-option go_package = "movie_collection/api/proto/moviecollectionv1;moviecollectionv1";
+option go_package = "github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1;moviecollectionv1";
 
 import "google/protobuf/empty.proto";
 
@@ -22,6 +22,7 @@ service WatchlistService {
   rpc RemoveMovieFromWatchlist(RemoveMovieFromWatchlistRequest) returns (google.protobuf.Empty);
   rpc GetUserWatchlist(GetUserWatchlistRequest) returns (GetUserWatchlistResponse);
 }
+
 
 message Movie {
   string movie_id = 1;
@@ -105,3 +106,4 @@ message GetUserWatchlistRequest {
 message GetUserWatchlistResponse {
   repeated Movie movies = 1;
 }
+

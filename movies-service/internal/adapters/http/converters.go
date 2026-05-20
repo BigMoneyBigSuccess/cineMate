@@ -1,9 +1,9 @@
 package http
 
 import (
-	"movie_collection/api/proto/moviecollectionv1"
-	"movie_collection/internal/core/domain"
-	"movie_collection/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/ports"
 	"strings"
 
 	"github.com/google/uuid"

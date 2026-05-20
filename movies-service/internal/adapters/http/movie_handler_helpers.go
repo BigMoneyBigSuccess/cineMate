@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"movie_collection/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

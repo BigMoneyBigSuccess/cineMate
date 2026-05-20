@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"analytics/api/proto/moviecollectionv1"
-	"analytics/internal/config"
-	"analytics/internal/core/domain"
-	"analytics/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/config"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

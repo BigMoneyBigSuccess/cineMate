@@ -3,8 +3,8 @@ package engine
 import (
 	"context"
 
-	"analytics/internal/core/domain"
-	"analytics/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
 )
 
 func (e *Engine) candidatesByGenres(ctx context.Context, filter ports.RecommendationFilter) ([]domain.MovieSnapshot, error) {

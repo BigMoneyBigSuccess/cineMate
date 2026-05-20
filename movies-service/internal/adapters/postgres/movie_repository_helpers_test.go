@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"fmt"
-	"movie_collection/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movies-service/internal/core/domain"
 	"strings"
 	"testing"
 )
