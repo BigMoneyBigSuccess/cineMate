@@ -70,6 +70,21 @@ func (mc *MovieClient) GetWatchlist(ctx context.Context, userID string) ([]*movi
 	return resp.Movies, nil
 }
 
+func (mc *MovieClient) UpsertMovie(ctx context.Context, movie *movieservicev1.Movie) error {
+	_, err := mc.catalogAdminClient.UpsertMovie(ctx, &movieservicev1.UpsertMovieRequest{Movie: movie})
+	return err
+}
+
+func (mc *MovieClient) ArchiveMovie(ctx context.Context, movieID string) error {
+	_, err := mc.catalogAdminClient.ArchiveMovie(ctx, &movieservicev1.ArchiveMovieRequest{MovieId: movieID})
+	return err
+}
+
+func (mc *MovieClient) RemoveMovie(ctx context.Context, movieID string) error {
+	_, err := mc.catalogAdminClient.RemoveMovie(ctx, &movieservicev1.RemoveMovieRequest{MovieId: movieID})
+	return err
+}
+
 func (mc *MovieClient) Close() error {
 	return mc.conn.Close()
 }

@@ -182,6 +182,36 @@ func (h *SocialHandler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{"following_ids": resp.FollowingIds, "total": resp.Total})
 }
 
+func (h *SocialHandler) IsFollowing(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	followerID := r.URL.Query().Get("follower_id")
+	if followerID == "" {
+		http.Error(w, "follower_id query param is required", http.StatusBadRequest)
+		return
+	}
+
+	userID := strings.TrimPrefix(r.URL.Path, "/api/v1/users/")
+	userID = strings.TrimSuffix(userID, "/is-following")
+
+	isFollowing, err := h.socialClient.IsFollowing(r.Context(), followerID, userID)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		writeGRPCErrorResponse(w, st.Code(), st.Message())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"is_following": isFollowing})
+}
+
 func bearerToken(r *http.Request) string {
 	h := r.Header.Get("Authorization")
 	if strings.HasPrefix(h, "Bearer ") {
