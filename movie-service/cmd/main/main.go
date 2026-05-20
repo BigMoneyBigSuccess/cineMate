@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -44,11 +43,11 @@ func run() error {
 
 	log.Printf("Loaded config: %s", cfg)
 
-	db, err := openPostgres(ctx, cfg.Postgres.URL)
+	pool, err := postgresadapter.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer pool.Close()
 
 	redisClient, err := openRedis(ctx, cfg.Redis)
 	if err != nil {
@@ -60,21 +59,31 @@ func run() error {
 		}()
 	}
 
-	movieRepo := postgresadapter.NewMovieRepository(db)
+	movieRepo := postgresadapter.NewMovieRepository(pool)
 	var repository ports.MovieRepository = movieRepo
 	repository = redisadapter.NewMovieCache(repository, redisClient, cfg.Cache.MovieTTL, cfg.Cache.MovieListTTL)
 
-	watchlistRepo := postgresadapter.NewWatchlistRepository(db)
+	movieUseCase := usecase.NewMovieUseCase(repository)
 
-	handler := httpadapter.NewMovieHandler(
-		usecase.NewMovieUseCase(repository),
+	if cfg.Syncer.Enabled {
+		client := syncer.NewClient(cfg.Syncer.BaseURL, cfg.Syncer.APIKey, cfg.Syncer.DailyRequestBudget)
+		defer client.Stop()
+		syncer.New(client, movieUseCase, cfg.Syncer.FetchDescription).Start(ctx)
+		log.Printf("syncer: enabled (budget=%d req/day, fetch_description=%v)",
+			cfg.Syncer.DailyRequestBudget, cfg.Syncer.FetchDescription)
+	}
+
+	watchlistRepo := postgresadapter.NewWatchlistRepository(pool)
+
+	handler := grpcadapter.NewMovieHandler(
+		movieUseCase,
 		usecase.NewWatchlistUseCase(watchlistRepo),
 	)
 
 	grpcServer := grpc.NewServer()
-	moviecollectionv1.RegisterMovieCatalogServiceServer(grpcServer, handler)
-	moviecollectionv1.RegisterMovieCatalogAdminServiceServer(grpcServer, handler)
-	moviecollectionv1.RegisterWatchlistServiceServer(grpcServer, handler)
+	movieservicev1.RegisterMovieServiceServer(grpcServer, handler)
+	movieservicev1.RegisterMovieAdminServiceServer(grpcServer, handler)
+	movieservicev1.RegisterWatchlistServiceServer(grpcServer, handler)
 	reflection.Register(grpcServer)
 
 	listener, err := net.Listen("tcp", cfg.GRPC.Addr)
@@ -94,23 +103,6 @@ func run() error {
 	}
 
 	return nil
-}
-
-func openPostgres(ctx context.Context, databaseURL string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", databaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("open postgres: %w", err)
-	}
-
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(pingCtx); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("ping postgres: %w", err)
-	}
-
-	return db, nil
 }
 
 func openRedis(ctx context.Context, cfg appconfig.RedisConfig) (*redis.Client, error) {
@@ -156,7 +148,7 @@ func shutdownGRPCServer(server *grpc.Server, timeout time.Duration) {
 
 func resolveConfigPath() string {
 	defaultPath := appconfig.DefaultPath
-	if value := os.Getenv("MOVIE_COLLECTION_CONFIG_PATH"); value != "" {
+	if value := os.Getenv("MOVIE_SERVICE_CONFIG_PATH"); value != "" {
 		defaultPath = value
 	}
 

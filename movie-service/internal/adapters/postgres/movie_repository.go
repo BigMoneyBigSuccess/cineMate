@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -24,13 +24,11 @@ func NewMovieRepository(db *sql.DB) *MovieRepository {
 }
 
 func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) error {
-	tx, err := r.db.BeginTx(ctx, nil)
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("begin transaction: %w", err)
 	}
-	defer func() {
-		_ = tx.Rollback()
-	}()
+	defer tx.Rollback(ctx) //nolint:errcheck
 
 	movieID, err := resolveMovieIDForUpsert(ctx, tx, movie)
 	if err != nil {
@@ -42,9 +40,8 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 		movie.LastSyncAt = time.Now().UTC()
 	}
 
-	_, err = tx.ExecContext(
-		ctx,
-		`INSERT INTO movies (
+	const q = `
+		INSERT INTO movies (
 			id,
 			title,
 			description,
@@ -66,7 +63,9 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 			source = EXCLUDED.source,
 			source_movie_id = EXCLUDED.source_movie_id,
 			last_sync_at = EXCLUDED.last_sync_at,
-			archived_at = NULL`,
+			archived_at = NULL`
+
+	if _, err = tx.Exec(ctx, q,
 		movie.MovieID,
 		movie.Title,
 		movie.Description,
@@ -76,9 +75,8 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 		movie.Source,
 		movie.SourceMovieID,
 		movie.LastSyncAt,
-	)
-	if err != nil {
-		return err
+	); err != nil {
+		return fmt.Errorf("upsert movie: %w", err)
 	}
 
 	if err := r.replaceGenres(ctx, tx, movie.MovieID, movie.Genres); err != nil {
@@ -91,23 +89,32 @@ func (r *MovieRepository) UpsertMovie(ctx context.Context, movie domain.Movie) e
 		return err
 	}
 
-	return tx.Commit()
+	return tx.Commit(ctx)
 }
 
 func (r *MovieRepository) ArchiveMovie(ctx context.Context, id uuid.UUID) error {
-	_, err := r.db.ExecContext(
-		ctx,
-		`UPDATE movies
+	const q = `
+		UPDATE movies
 		SET archived_at = COALESCE(archived_at, now())
-		WHERE id = $1`,
-		id,
-	)
-	return err
+		WHERE id = $1`
+
+	if _, err := r.db.Exec(ctx, q, id); err != nil {
+		return fmt.Errorf("archive movie: %w", err)
+	}
+	return nil
 }
 
 func (r *MovieRepository) RemoveMovie(ctx context.Context, id uuid.UUID) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM movies WHERE id = $1`, id)
-	return err
+	const q = `DELETE FROM movies WHERE id = $1`
+
+	tag, err := r.db.Exec(ctx, q, id)
+	if err != nil {
+		return fmt.Errorf("remove movie: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
 }
 
 func (r *MovieRepository) GetMovieByID(ctx context.Context, id uuid.UUID) (*domain.Movie, error) {
@@ -115,9 +122,9 @@ func (r *MovieRepository) GetMovieByID(ctx context.Context, id uuid.UUID) (*doma
 WHERE m.id = $1
   AND m.archived_at IS NULL`
 
-	rows, err := r.db.QueryContext(ctx, query, id)
+	rows, err := r.db.Query(ctx, query, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get movie by id: %w", err)
 	}
 	defer rows.Close()
 
@@ -126,7 +133,7 @@ WHERE m.id = $1
 		return nil, err
 	}
 	if len(movies) == 0 {
-		return nil, sql.ErrNoRows
+		return nil, pgx.ErrNoRows
 	}
 
 	return &movies[0], nil
@@ -214,11 +221,49 @@ func (r *MovieRepository) ListMovies(ctx context.Context, filter ports.MovieFilt
 		query += "\n" + strings.Join(pagination, " ")
 	}
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("list movies: %w", err)
 	}
 	defer rows.Close()
 
 	return scanMovies(rows)
+}
+
+var _ ports.MovieRepository = (*MovieRepository)(nil)
+
+// pgx sentinel re-exported so callers don't need to import pgx directly.
+var ErrNoRows = pgx.ErrNoRows
+
+func resolveMovieIDForUpsert(ctx context.Context, tx pgx.Tx, movie domain.Movie) (uuid.UUID, error) {
+	if movieID, found, err := findMovieIDBySource(ctx, tx, movie.Source, movie.SourceMovieID); err != nil {
+		return uuid.Nil, err
+	} else if found {
+		return movieID, nil
+	}
+
+	if movie.MovieID != uuid.Nil {
+		return movie.MovieID, nil
+	}
+
+	return uuid.NewRandom()
+}
+
+func findMovieIDBySource(ctx context.Context, tx pgx.Tx, source, sourceMovieID string) (uuid.UUID, bool, error) {
+	const q = `
+		SELECT id
+		FROM movies
+		WHERE source = $1
+		  AND source_movie_id = $2
+		LIMIT 1`
+
+	var movieID uuid.UUID
+	err := tx.QueryRow(ctx, q, source, sourceMovieID).Scan(&movieID)
+	if err == nil {
+		return movieID, true, nil
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, false, nil
+	}
+	return uuid.Nil, false, fmt.Errorf("find movie by source: %w", err)
 }

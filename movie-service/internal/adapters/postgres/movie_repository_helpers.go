@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -32,9 +31,9 @@ func (r *MovieRepository) loadMoviesByIDs(ctx context.Context, ids []uuid.UUID) 
 WHERE m.id IN (%s)
   AND m.archived_at IS NULL`, strings.Join(placeholders, ", "))
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("load movies by ids: %w", err)
 	}
 	defer rows.Close()
 
@@ -64,9 +63,9 @@ WHERE m.id IN (%s)
 	return result, nil
 }
 
-func (r *MovieRepository) replaceGenres(ctx context.Context, tx *sql.Tx, movieID uuid.UUID, genres []domain.Genre) error {
-	if _, err := tx.ExecContext(ctx, `DELETE FROM movie_genres WHERE movie_id = $1`, movieID); err != nil {
-		return err
+func (r *MovieRepository) replaceGenres(ctx context.Context, tx pgx.Tx, movieID uuid.UUID, genres []domain.Genre) error {
+	if _, err := tx.Exec(ctx, `DELETE FROM movie_genres WHERE movie_id = $1`, movieID); err != nil {
+		return fmt.Errorf("delete movie genres: %w", err)
 	}
 
 	for _, genre := range genres {
@@ -79,24 +78,20 @@ func (r *MovieRepository) replaceGenres(ctx context.Context, tx *sql.Tx, movieID
 			return err
 		}
 
-		if _, err := tx.ExecContext(
-			ctx,
-			`INSERT INTO movie_genres (movie_id, genre_id)
-			VALUES ($1, $2)
-			ON CONFLICT DO NOTHING`,
-			movieID,
-			genreID,
+		if _, err := tx.Exec(ctx,
+			`INSERT INTO movie_genres (movie_id, genre_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+			movieID, genreID,
 		); err != nil {
-			return err
+			return fmt.Errorf("insert movie genre: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (r *MovieRepository) replacePeople(ctx context.Context, tx *sql.Tx, table string, movieID uuid.UUID, people []domain.Person) error {
-	if _, err := tx.ExecContext(ctx, fmt.Sprintf(`DELETE FROM %s WHERE movie_id = $1`, table), movieID); err != nil {
-		return err
+func (r *MovieRepository) replacePeople(ctx context.Context, tx pgx.Tx, table string, movieID uuid.UUID, people []domain.Person) error {
+	if _, err := tx.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE movie_id = $1`, table), movieID); err != nil {
+		return fmt.Errorf("delete %s: %w", table, err)
 	}
 
 	for _, person := range people {
@@ -109,66 +104,26 @@ func (r *MovieRepository) replacePeople(ctx context.Context, tx *sql.Tx, table s
 			return err
 		}
 
-		if _, err := tx.ExecContext(
-			ctx,
-			fmt.Sprintf(`INSERT INTO %s (movie_id, person_id)
-			VALUES ($1, $2)
-			ON CONFLICT DO NOTHING`, table),
-			movieID,
-			personID,
+		if _, err := tx.Exec(ctx,
+			fmt.Sprintf(`INSERT INTO %s (movie_id, person_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, table),
+			movieID, personID,
 		); err != nil {
-			return err
+			return fmt.Errorf("insert %s: %w", table, err)
 		}
 	}
 
 	return nil
 }
 
-func resolveMovieIDForUpsert(ctx context.Context, tx *sql.Tx, movie domain.Movie) (uuid.UUID, error) {
-	if movieID, found, err := findMovieIDBySource(ctx, tx, movie.Source, movie.SourceMovieID); err != nil {
-		return uuid.Nil, err
-	} else if found {
-		return movieID, nil
-	}
-
-	if movie.MovieID != uuid.Nil {
-		return movie.MovieID, nil
-	}
-
-	return uuid.NewRandom()
-}
-
-func findMovieIDBySource(ctx context.Context, tx *sql.Tx, source, sourceMovieID string) (uuid.UUID, bool, error) {
-	var movieID uuid.UUID
-	err := tx.QueryRowContext(
-		ctx,
-		`SELECT id
-		FROM movies
-		WHERE source = $1
-		  AND source_movie_id = $2
-		LIMIT 1`,
-		source,
-		sourceMovieID,
-	).Scan(&movieID)
-	if err == nil {
-		return movieID, true, nil
-	}
-	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, false, nil
-	}
-
-	return uuid.Nil, false, err
-}
-
-func ensureGenre(ctx context.Context, tx *sql.Tx, genre domain.Genre) (uuid.UUID, error) {
+func ensureGenre(ctx context.Context, tx pgx.Tx, genre domain.Genre) (uuid.UUID, error) {
 	if genre.ID != uuid.Nil {
 		var existingID uuid.UUID
-		err := tx.QueryRowContext(ctx, `SELECT id FROM genres WHERE id = $1`, genre.ID).Scan(&existingID)
+		err := tx.QueryRow(ctx, `SELECT id FROM genres WHERE id = $1`, genre.ID).Scan(&existingID)
 		if err == nil {
 			return existingID, nil
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return uuid.Nil, err
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return uuid.Nil, fmt.Errorf("look up genre by id: %w", err)
 		}
 	}
 
@@ -178,49 +133,46 @@ func ensureGenre(ctx context.Context, tx *sql.Tx, genre domain.Genre) (uuid.UUID
 	}
 
 	var genreID uuid.UUID
-	err := tx.QueryRowContext(ctx, `SELECT id FROM genres WHERE name = $1`, name).Scan(&genreID)
+	err := tx.QueryRow(ctx, `SELECT id FROM genres WHERE name = $1`, name).Scan(&genreID)
 	if err == nil {
 		return genreID, nil
 	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, err
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, fmt.Errorf("look up genre by name: %w", err)
 	}
 
 	genreID = genre.ID
 	if genreID == uuid.Nil {
-		genreID, err = uuid.NewRandom()
-		if err != nil {
-			return uuid.Nil, err
+		var newErr error
+		genreID, newErr = uuid.NewRandom()
+		if newErr != nil {
+			return uuid.Nil, newErr
 		}
 	}
 
-	if _, err := tx.ExecContext(
-		ctx,
-		`INSERT INTO genres (id, name)
-		VALUES ($1, $2)
-		ON CONFLICT (name) DO NOTHING`,
-		genreID,
-		name,
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO genres (id, name) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING`,
+		genreID, name,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("insert genre: %w", err)
 	}
 
-	if err := tx.QueryRowContext(ctx, `SELECT id FROM genres WHERE name = $1`, name).Scan(&genreID); err != nil {
-		return uuid.Nil, err
+	if err := tx.QueryRow(ctx, `SELECT id FROM genres WHERE name = $1`, name).Scan(&genreID); err != nil {
+		return uuid.Nil, fmt.Errorf("re-fetch genre id: %w", err)
 	}
 
 	return genreID, nil
 }
 
-func ensurePerson(ctx context.Context, tx *sql.Tx, person domain.Person) (uuid.UUID, error) {
+func ensurePerson(ctx context.Context, tx pgx.Tx, person domain.Person) (uuid.UUID, error) {
 	if person.ID != uuid.Nil {
 		var existingID uuid.UUID
-		err := tx.QueryRowContext(ctx, `SELECT id FROM persons WHERE id = $1`, person.ID).Scan(&existingID)
+		err := tx.QueryRow(ctx, `SELECT id FROM persons WHERE id = $1`, person.ID).Scan(&existingID)
 		if err == nil {
 			return existingID, nil
 		}
-		if !errors.Is(err, sql.ErrNoRows) {
-			return uuid.Nil, err
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return uuid.Nil, fmt.Errorf("look up person by id: %w", err)
 		}
 	}
 
@@ -235,44 +187,37 @@ func ensurePerson(ctx context.Context, tx *sql.Tx, person domain.Person) (uuid.U
 		birthYear = person.BirthYear
 	}
 
-	var personID uuid.UUID
-	err := tx.QueryRowContext(
-		ctx,
-		`SELECT id
+	const q = `
+		SELECT id
 		FROM persons
 		WHERE name = $1
 		  AND surname = $2
 		  AND ((birth_year = $3) OR (birth_year IS NULL AND $3 IS NULL))
-		LIMIT 1`,
-		name,
-		surname,
-		birthYear,
-	).Scan(&personID)
+		LIMIT 1`
+
+	var personID uuid.UUID
+	err := tx.QueryRow(ctx, q, name, surname, birthYear).Scan(&personID)
 	if err == nil {
 		return personID, nil
 	}
-	if !errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, err
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, fmt.Errorf("look up person: %w", err)
 	}
 
 	personID = person.ID
 	if personID == uuid.Nil {
-		personID, err = uuid.NewRandom()
-		if err != nil {
-			return uuid.Nil, err
+		var newErr error
+		personID, newErr = uuid.NewRandom()
+		if newErr != nil {
+			return uuid.Nil, newErr
 		}
 	}
 
-	if _, err := tx.ExecContext(
-		ctx,
-		`INSERT INTO persons (id, name, surname, birth_year)
-		VALUES ($1, $2, $3, $4)`,
-		personID,
-		name,
-		surname,
-		birthYear,
+	if _, err := tx.Exec(ctx,
+		`INSERT INTO persons (id, name, surname, birth_year) VALUES ($1, $2, $3, $4)`,
+		personID, name, surname, birthYear,
 	); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("insert person: %w", err)
 	}
 
 	return personID, nil
@@ -346,13 +291,12 @@ LEFT JOIN LATERAL (
 ) directors ON TRUE`
 }
 
-func scanMovies(rows *sql.Rows) ([]domain.Movie, error) {
+func scanMovies(rows pgx.Rows) ([]domain.Movie, error) {
 	var movies []domain.Movie
 
 	for rows.Next() {
 		var (
 			movie         domain.Movie
-			archivedAt    sql.NullTime
 			genresJSON    []byte
 			actorsJSON    []byte
 			directorsJSON []byte
@@ -368,25 +312,22 @@ func scanMovies(rows *sql.Rows) ([]domain.Movie, error) {
 			&movie.Source,
 			&movie.SourceMovieID,
 			&movie.LastSyncAt,
-			&archivedAt,
+			&movie.ArchivedAt,
 			&genresJSON,
 			&actorsJSON,
 			&directorsJSON,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan movie row: %w", err)
 		}
 
 		if err := json.Unmarshal(genresJSON, &movie.Genres); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal genres: %w", err)
 		}
 		if err := json.Unmarshal(actorsJSON, &movie.Actors); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshal actors: %w", err)
 		}
 		if err := json.Unmarshal(directorsJSON, &movie.Directors); err != nil {
-			return nil, err
-		}
-		if archivedAt.Valid {
-			movie.ArchivedAt = &archivedAt.Time
+			return nil, fmt.Errorf("unmarshal directors: %w", err)
 		}
 
 		movies = append(movies, movie)
