@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"movie_service/internal/core/domain"
-	"movie_service/internal/core/ports"
-	"movie_service/internal/core/usecase"
-	"proto/movie-service/movieservicev1"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/usecase"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

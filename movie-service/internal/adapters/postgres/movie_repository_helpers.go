@@ -10,6 +10,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 func (r *MovieRepository) loadMoviesByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Movie, error) {

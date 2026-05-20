@@ -11,15 +11,17 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var _ ports.MovieRepository = (*MovieRepository)(nil)
 
 type MovieRepository struct {
-	db *sql.DB
+	db *pgxpool.Pool
 }
 
-func NewMovieRepository(db *sql.DB) *MovieRepository {
+func NewMovieRepository(db *pgxpool.Pool) *MovieRepository {
 	return &MovieRepository{db: db}
 }
 

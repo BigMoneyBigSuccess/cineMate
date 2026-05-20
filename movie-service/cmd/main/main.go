@@ -12,15 +12,15 @@ import (
 	"syscall"
 	"time"
 
-	httpadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/http"
+	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/grpc"
 	postgresadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/postgres"
 	redisadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/redis"
 	appconfig "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/usecase"
-	"github.com/BigMoneyBigSuccess/cineMate/proto/movies/moviecollectionv1"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/syncer"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 
-	_ "github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

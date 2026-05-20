@@ -3,9 +3,9 @@ package grpc
 import (
 	"strings"
 
-	"movie_service/internal/core/domain"
-	"movie_service/internal/core/ports"
-	"proto/movie-service/movieservicev1"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
+	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"

@@ -2,21 +2,22 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var _ ports.WatchlistRepository = (*WatchlistRepository)(nil)
 
 type WatchlistRepository struct {
-	db *sql.DB
+	db *pgxpool.Pool
 }
 
-func NewWatchlistRepository(db *sql.DB) *WatchlistRepository {
+func NewWatchlistRepository(db *pgxpool.Pool) *WatchlistRepository {
 	return &WatchlistRepository{db: db}
 }
 
