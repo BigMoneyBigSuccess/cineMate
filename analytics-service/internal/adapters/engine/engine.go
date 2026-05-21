@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )
@@ -57,7 +57,9 @@ func (e *Engine) rankCandidates(candidates []domain.MovieSnapshot, filter ports.
 		seen[fb.MovieID] = struct{}{}
 	}
 	for _, r := range filter.RecentRecommendations {
-		seen[r.MovieID] = struct{}{}
+		if r.MovieID != nil {
+			seen[*r.MovieID] = struct{}{}
+		}
 	}
 
 	sessionID := uuid.New()
@@ -69,11 +71,12 @@ func (e *Engine) rankCandidates(candidates []domain.MovieSnapshot, filter ports.
 		if _, ok := seen[m.MovieID]; ok {
 			continue
 		}
+		movieID := m.MovieID
 		recs = append(recs, domain.MovieRecommendation{
 			RecommendationID: uuid.New(),
 			SessionID:        sessionID,
 			UserID:           filter.Profile.UserID,
-			MovieID:          m.MovieID,
+			MovieID:          &movieID,
 			Rank:             rank,
 			Strategy:         filter.Strategy,
 			GeneratedAt:      now,

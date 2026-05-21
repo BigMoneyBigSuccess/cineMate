@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

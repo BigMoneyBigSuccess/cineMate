@@ -1,0 +1,52 @@
+services:
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - "-path=/migrations"
+      - "-database=${ANALYTICS_DATABASE_URL}"
+      - "up"
+    volumes:
+      - ./migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  analytics:
+    build:
+      context: ..
+      dockerfile: analytics-service/Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      ANALYTICS_DATABASE_URL: ${ANALYTICS_DATABASE_URL}
+      ANALYTICS_MOVIE_COLLECTION_ADDR: ${ANALYTICS_MOVIE_COLLECTION_ADDR}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: analytics-net

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/config"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )

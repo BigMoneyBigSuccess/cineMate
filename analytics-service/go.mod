@@ -1,16 +1,21 @@
-module github.com/BigMoneyBigSuccess/cineMate/analytics-service
+module github.com/BigMoneyBigSucces/cineMate/analytics-service
 
 go 1.26.1
 
 require (
+	github.com/BigMoneyBigSuccess/cineMate/clients v0.1.0
 	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.9.2
 	google.golang.org/grpc v1.79.3
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
+replace (
+	github.com/BigMoneyBigSuccess/cineMate/clients => ../clients
+	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -23,5 +28,4 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.35.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 )

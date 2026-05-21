@@ -9,11 +9,11 @@ import (
 const DefaultPath = "configs/config.local.yaml"
 
 type Config struct {
-	GRPC            GRPCConfig            `yaml:"grpc"`
-	Postgres        PostgresConfig        `yaml:"postgres"`
-	MovieCollection MovieCollectionConfig `yaml:"movie_collection"`
-	Recommendation  RecommendationConfig  `yaml:"recommendation"`
-	ShutdownTimeout time.Duration         `yaml:"shutdown_timeout"`
+	GRPC            GRPCConfig           `yaml:"grpc"`
+	Postgres        PostgresConfig       `yaml:"postgres"`
+	MovieCollection MovieCatalogConfig   `yaml:"movie_collection"`
+	Recommendation  RecommendationConfig `yaml:"recommendation"`
+	ShutdownTimeout time.Duration        `yaml:"shutdown_timeout"`
 }
 
 type GRPCConfig struct {
@@ -24,7 +24,7 @@ type PostgresConfig struct {
 	URL string `yaml:"url"`
 }
 
-type MovieCollectionConfig struct {
+type MovieCatalogConfig struct {
 	Addr    string        `yaml:"addr"`
 	Timeout time.Duration `yaml:"timeout"`
 }
@@ -39,7 +39,7 @@ func Default() Config {
 		GRPC: GRPCConfig{
 			Addr: ":8081",
 		},
-		MovieCollection: MovieCollectionConfig{
+		MovieCollection: MovieCatalogConfig{
 			Addr:    "localhost:8080",
 			Timeout: 3 * time.Second,
 		},

@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package analytics.v1;
+
+option go_package = "github.com/BigMoneyBigSuccess/cineMate/proto/analytics-service/analyticsservicev1;analyticsservicev1";
+
+import "google/protobuf/empty.proto";
+import "movie-service/movie_service.proto";
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+message Feedback {
+  string          feedback_id = 1;
+  string          user_id     = 2;
+  string          movie_id    = 3;
+  int32           rating      = 4;
+  optional string title       = 5;
+  optional string content     = 6;
+}
+
+// feedback_id: omit to create a new record; provide to target an existing one.
+message UpsertFeedbackRequest {
+  optional string feedback_id = 1;
+  string          user_id     = 2;
+  string          movie_id    = 3;
+  int32           rating      = 4;
+  optional string title       = 5;
+  optional string content     = 6;
+}
+
+message UpsertFeedbackResponse {
+  string feedback_id = 1;
+}
+
+message RemoveFeedbackRequest {
+  string feedback_id = 1;
+}
+
+message GetFeedbackRequest {
+  string feedback_id = 1;
+}
+
+message GetFeedbackResponse {
+  Feedback feedback = 1;
+}
+
+message ListUserFeedbackRequest {
+  string user_id = 1;
+}
+
+message ListUserFeedbackResponse {
+  repeated Feedback feedback = 1;
+}
+
+service FeedbackService {
+  rpc UpsertFeedback   (UpsertFeedbackRequest)   returns (UpsertFeedbackResponse);
+  rpc RemoveFeedback   (RemoveFeedbackRequest)   returns (google.protobuf.Empty);
+  rpc GetFeedback      (GetFeedbackRequest)      returns (GetFeedbackResponse);
+  rpc ListUserFeedback (ListUserFeedbackRequest) returns (ListUserFeedbackResponse);
+}
+
+// ─── Recommendations ──────────────────────────────────────────────────────────
+
+message Recommendation {
+  string                   recommendation_id = 1; // needed for MarkInteraction
+  movieservice.v1.Movie    movie             = 2;
+  string                   strategy          = 3;
+  optional string          ai_response       = 4; // raw AI text; set only for ai_model_based strategy
+  int32                    rank              = 5;
+  int64                    generated_at      = 6; // Unix timestamp (seconds)
+}
+
+// limit: 0 means use server default.
+// strategy: one of preference_profile_based | genres_based | actors_based |
+//           directors_based | ai_model_based.
+//           Empty string falls back to preference_profile_based.
+message GenerateRecommendationsRequest {
+  string user_id  = 1;
+  string strategy = 2;
+  int32  limit    = 3;
+}
+
+message GenerateRecommendationsResponse {
+  repeated Recommendation recommendations = 1;
+}
+
+// interaction: "click" | "dismiss"
+message MarkInteractionRequest {
+  string recommendation_id = 1;
+  string interaction       = 2;
+}
+
+message ResetRecommendationHistoryRequest {
+  string user_id = 1;
+}
+
+// limit: number of most-recent recommendations to return; 0 means use server default.
+message GetRecommendationHistoryRequest {
+  string user_id  = 1;
+  string strategy = 2;
+  int32  limit    = 3;
+}
+
+message GetRecommendationHistoryResponse {
+  repeated Recommendation recommendations = 1;
+}
+
+service RecommendationService {
+  rpc GenerateRecommendations    (GenerateRecommendationsRequest)    returns (GenerateRecommendationsResponse);
+  rpc MarkInteraction            (MarkInteractionRequest)            returns (google.protobuf.Empty);
+  rpc ResetRecommendationHistory (ResetRecommendationHistoryRequest) returns (google.protobuf.Empty);
+  rpc GetRecommendationHistory   (GetRecommendationHistoryRequest)   returns (GetRecommendationHistoryResponse);
+}

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -27,8 +27,8 @@ func (r *RecommendationRepository) SaveRecommendationsBatch(ctx context.Context,
 
 	const q = `
 		INSERT INTO movie_recommendations
-		    (recommendation_id, session_id, user_id, movie_id, rank, strategy, interaction, generated_at)
-		VALUES ($1, $2, $3, $4, $5, $6::recommendation_strategy, $7::interaction_type, $8)`
+		    (recommendation_id, session_id, user_id, movie_id, ai_response, rank, strategy, interaction, generated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7::recommendation_strategy, $8::interaction_type, $9)`
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -39,7 +39,7 @@ func (r *RecommendationRepository) SaveRecommendationsBatch(ctx context.Context,
 	batch := &pgx.Batch{}
 	for _, rec := range recommendations {
 		batch.Queue(q,
-			rec.RecommendationID, rec.SessionID, rec.UserID, rec.MovieID,
+			rec.RecommendationID, rec.SessionID, rec.UserID, rec.MovieID, rec.AIResponse,
 			rec.Rank,
 			string(rec.Strategy),
 			string(rec.Interaction),
@@ -76,12 +76,18 @@ func (r *RecommendationRepository) MarkInteraction(ctx context.Context, recommen
 
 func (r *RecommendationRepository) ListRecommendationsByUser(ctx context.Context, userID uuid.UUID, filter ports.RecommendationHistoryFilter) ([]domain.MovieRecommendation, error) {
 	q := `
-		SELECT recommendation_id, session_id, user_id, movie_id, rank, strategy, interaction, generated_at
+		SELECT recommendation_id, session_id, user_id, movie_id, ai_response, rank, strategy, interaction, generated_at
 		FROM movie_recommendations
-		WHERE user_id = $1
-		ORDER BY generated_at DESC`
+		WHERE user_id = $1`
 
 	args := []any{userID}
+
+	if filter.Strategy != "" {
+		args = append(args, string(filter.Strategy))
+		q += fmt.Sprintf(" AND strategy = $%d::recommendation_strategy", len(args))
+	}
+
+	q += " ORDER BY generated_at DESC"
 
 	if filter.Limit > 0 {
 		args = append(args, filter.Limit)
@@ -106,7 +112,7 @@ func (r *RecommendationRepository) ListRecommendationsByUser(ctx context.Context
 			interaction string
 		)
 		if err := rows.Scan(
-			&rec.RecommendationID, &rec.SessionID, &rec.UserID, &rec.MovieID,
+			&rec.RecommendationID, &rec.SessionID, &rec.UserID, &rec.MovieID, &rec.AIResponse,
 			&rec.Rank, &strategy, &interaction, &rec.GeneratedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan recommendation row: %w", err)
