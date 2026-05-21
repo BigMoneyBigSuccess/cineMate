@@ -93,6 +93,19 @@ func overrideFromEnv(cfg *Config) error {
 	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SYNCER_API_KEY")); value != "" {
 		cfg.Syncer.APIKey = value
 	}
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SYNCER_ENABLED")); value != "" {
+		cfg.Syncer.Enabled = value == "true" || value == "1"
+	}
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SYNCER_BASE_URL")); value != "" {
+		cfg.Syncer.BaseURL = value
+	}
+	if value := strings.TrimSpace(os.Getenv("MOVIE_SERVICE_SYNCER_DAILY_REQUEST_BUDGET")); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return fmt.Errorf("parse MOVIE_SERVICE_SYNCER_DAILY_REQUEST_BUDGET: %w", err)
+		}
+		cfg.Syncer.DailyRequestBudget = parsed
+	}
 
 	return nil
 }

@@ -2,30 +2,20 @@ FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
-RUN apk add --no-cache ca-certificates
-
-COPY proto/go.mod proto/go.sum proto/
-COPY movie-service/go.mod movie-service/go.sum movie-service/
-RUN cd movie-service && go mod download
-
-COPY proto/ proto/
 COPY movie-service/ movie-service/
 
-RUN cd movie-service && CGO_ENABLED=0 GOOS=linux go build -trimpath -o /out/movie_service ./cmd/main
+RUN cd movie-service && CGO_ENABLED=0 GOOS=linux go build \
+    -mod=vendor \
+    -trimpath -ldflags="-s -w" \
+    -o /out/movie_service ./cmd/main
 
-FROM alpine:3.20
+FROM scratch
 
-WORKDIR /app
-
-RUN addgroup -S app && adduser -S app -G app \
-    && apk add --no-cache ca-certificates
-
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /out/movie_service /app/movie_service
-COPY --from=builder /src/movie-service/configs /app/configs
+COPY movie-service/configs/config.docker.yaml /app/configs/config.docker.yaml
 
-USER app
-
-ENV MOVIE_SERVICE_CONFIG_PATH=/app/configs/config.local.yaml
+ENV MOVIE_SERVICE_CONFIG_PATH=/app/configs/config.docker.yaml
 
 EXPOSE 8080
 

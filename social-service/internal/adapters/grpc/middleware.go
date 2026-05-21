@@ -22,6 +22,7 @@ var openMethods = map[string]bool{
 	"/social.v1.SocialService/GetFollowers":  true,
 	"/social.v1.SocialService/GetFollowing":  true,
 	"/social.v1.SocialService/IsFollowing":   true,
+	"/social.v1.SocialService/SearchUsers":   true,
 }
 
 func AuthUnaryInterceptor(authClient *clients.AuthClient) grpc.UnaryServerInterceptor {

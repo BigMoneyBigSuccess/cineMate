@@ -2,9 +2,12 @@ package grpc
 
 import (
 	"context"
+	"strings"
 
 	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/usecase"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type AuthHandler struct {
@@ -43,6 +46,17 @@ func (h *AuthHandler) Login(ctx context.Context, req *authv1.LoginRequest) (*aut
 	}
 
 	return &authv1.LoginResponse{Token: token}, nil
+}
+
+func (h *AuthHandler) Logout(ctx context.Context, req *authv1.LogoutRequest) (*authv1.LogoutResponse, error) {
+	token := strings.TrimSpace(req.GetToken())
+	if token == "" {
+		return nil, status.Error(codes.InvalidArgument, "token is required")
+	}
+	if err := h.useCase.Logout(ctx, token); err != nil {
+		return nil, mapAuthError(err)
+	}
+	return &authv1.LogoutResponse{}, nil
 }
 
 func (h *AuthHandler) ValidateToken(ctx context.Context, req *authv1.ValidateTokenRequest) (*authv1.ValidateTokenResponse, error) {

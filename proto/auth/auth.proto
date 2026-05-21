@@ -8,6 +8,7 @@ service AuthService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
 }
 
 message RegisterRequest {
@@ -37,3 +38,9 @@ message ValidateTokenResponse {
   bool   valid   = 2;
   string error   = 3;
 }
+
+message LogoutRequest {
+  string token = 1;
+}
+
+message LogoutResponse {}

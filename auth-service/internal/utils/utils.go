@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"os"
@@ -71,6 +72,30 @@ func ParseJWT(tokenStr string) (uuid.UUID, error) {
 	}
 
 	return userID, nil
+}
+
+func GetTokenExpiry(tokenStr string) (time.Time, error) {
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		return time.Time{}, errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return time.Time{}, errors.New("invalid token claims")
+	}
+
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return time.Time{}, errors.New("missing exp claim")
+	}
+
+	return time.Unix(int64(exp), 0), nil
+}
+
+func HashToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return fmt.Sprintf("%x", h)
 }
 
 func HashPassword(password string) (string, error) {

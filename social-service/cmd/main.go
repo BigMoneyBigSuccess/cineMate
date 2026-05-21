@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,14 +13,12 @@ import (
 	"syscall"
 	"time"
 
-	"database/sql"
-
-	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/social-service/internal/adapters/grpc"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/adapters/postgres"
-	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/usecase"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

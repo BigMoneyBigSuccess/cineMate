@@ -1,58 +1,193 @@
 services:
-  api-gateway:
-    image: absolutedock3r/cinemate-api-gateway:latest
-    ports:
-      - "8080:8080"         
+  postgres:
+    image: postgres:17-alpine
     environment:
-      - AUTH_SERVICE_URL=http://auth-service:50051
-      - MOVIE_SERVICE_URL=http://movie-service:50052
-      - SOCIAL_SERVICE_URL=http://social-service:50053
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./docker/01-init-dbs.sh:/docker-entrypoint-initdb.d/01-init-dbs.sh:ro
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - cinemate
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - cinemate
+
+  auth-migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/authdb?sslmode=disable"
+      - "up"
+    volumes:
+      - ./auth-service/migrations:/migrations:ro
     depends_on:
-      - auth-service
-      - movie-service
-      - social-service
-      - analytics-service
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - cinemate
+
+  movie-migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/moviedb?sslmode=disable"
+      - "up"
+    volumes:
+      - ./movie-service/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - cinemate
+
+  social-migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/socialdb?sslmode=disable"
+      - "up"
+    volumes:
+      - ./social-service/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - cinemate
+
+  analytics-migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/analyticsdb?sslmode=disable"
+      - "up"
+    volumes:
+      - ./analytics-service/migrations:/migrations:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - cinemate
 
   auth-service:
-    image: yourdockerhub/cinemate-auth-service:latest
-    ports:
-      - "50051:50051"        #grpc port?
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:pass@db:5432/auth
+      AUTH_CONFIG_PATH: /configs/config.docker.yaml
+      AUTH_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/authdb?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      - db
+      auth-migrate:
+        condition: service_completed_successfully
+    networks:
+      - cinemate
 
   movie-service:
-    image: yourdockerhub/cinemate-movie-service:latest
+    build:
+      context: .
+      dockerfile: movie-service/Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:pass@db:5432/movie
+      MOVIE_SERVICE_CONFIG_PATH: /app/configs/config.docker.yaml
+      MOVIE_SERVICE_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/moviedb?sslmode=disable
+      MOVIE_SERVICE_REDIS_ADDR: redis:6379
+      MOVIE_SERVICE_SYNCER_ENABLED: ${MOVIE_SERVICE_SYNCER_ENABLED:-false}
+      MOVIE_SERVICE_SYNCER_API_KEY: ${KINOPOISK_API_KEY:-}
     depends_on:
-      - db
+      movie-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    networks:
+      - cinemate
+
+  movie-seed:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    command: ["/bin/sh", "/seed-movies.sh"]
+    volumes:
+      - ./docker/seed-movies.sh:/seed-movies.sh:ro
+      - ./docker/seeds:/seeds:ro
+    depends_on:
+      movie-service:
+        condition: service_started
+    restart: "no"
+    networks:
+      - cinemate
 
   social-service:
-    image: yourdockerhub/cinemate-social-service:latest
+    build:
+      context: .
+      dockerfile: social-service/Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:pass@db:5432/social
+      SOCIAL_CONFIG_PATH: /configs/config.docker.yaml
+      SOCIAL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/socialdb?sslmode=disable
     depends_on:
-      - db
+      social-migrate:
+        condition: service_completed_successfully
+      auth-service:
+        condition: service_started
+    networks:
+      - cinemate
 
   analytics-service:
-    image: yourdockerhub/cinemate-analytics-service:latest
+    build:
+      context: .
+      dockerfile: analytics-service/Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:pass@db:5432/analytics
+      ANALYTICS_CONFIG_PATH: /configs/config.docker.yaml
+      ANALYTICS_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/analyticsdb?sslmode=disable
+      ANALYTICS_MOVIE_COLLECTION_ADDR: movie-service:50052
+      ANALYTICS_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
     depends_on:
-      - db
+      analytics-migrate:
+        condition: service_completed_successfully
+      movie-service:
+        condition: service_started
+    networks:
+      - cinemate
 
-  db:
-    image: postgres:17
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pswd
-      POSTGRES_DB: cinemate
-    volumes:
-      - pg_data:/var/lib/postgresql/data
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
     ports:
-      - "5432:5432"
+      - "8080:8080"
+    depends_on:
+      auth-service:
+        condition: service_started
+      movie-service:
+        condition: service_started
+      social-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+    networks:
+      - cinemate
 
 volumes:
-  pg_data:
+  postgres_data:
+
+networks:
+  cinemate:
+    driver: bridge
