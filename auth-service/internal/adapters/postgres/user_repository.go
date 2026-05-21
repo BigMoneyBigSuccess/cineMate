@@ -7,6 +7,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/ports"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 var _ ports.UserRepository = (*UserRepository)(nil)
@@ -23,6 +24,9 @@ func (r *UserRepository) CreateUser(ctx context.Context, user domain.User) (uuid
 	const query = `INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id`
 	var id uuid.UUID
 	if err := r.db.QueryRowContext(ctx, query, user.Email, user.Password).Scan(&id); err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return uuid.Nil, domain.ErrUserExists
+		}
 		return uuid.Nil, err
 	}
 	return id, nil

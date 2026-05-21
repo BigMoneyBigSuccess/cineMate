@@ -1,13 +1,20 @@
-# syntax=docker/dockerfile:1
 FROM golang:1.26-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /social-service ./cmd/main.go
 
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /social-service /social-service
+WORKDIR /build
+
+COPY social-service/ social-service/
+
+RUN cd social-service && CGO_ENABLED=0 GOOS=linux go build \
+    -mod=vendor \
+    -trimpath -ldflags="-s -w" \
+    -o /social ./cmd
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /social /social
+COPY social-service/configs/config.docker.yaml /configs/config.docker.yaml
+
 EXPOSE 50053
-ENTRYPOINT ["/social-service"]
+
+ENTRYPOINT ["/social"]

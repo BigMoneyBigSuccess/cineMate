@@ -60,6 +60,7 @@ func run() error {
 	
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
+	mux.HandleFunc("/auth/logout", authHandler.Logout)
 
 	
 	authMiddleware := httpadapter.AuthMiddleware(authClient, true)

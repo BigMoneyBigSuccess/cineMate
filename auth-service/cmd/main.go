@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,15 +13,13 @@ import (
 	"syscall"
 	"time"
 
-	"database/sql"
-
-	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/grpc"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/adapters/postgres"
-	"github.com/BigMoneyBigSuccess/cineMate/clients"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/utils"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -58,7 +57,8 @@ func run() error {
 	defer socialClient.Close()
 
 	repo := postgres.NewUserRepository(db)
-	useCase := usecase.NewAuthUseCase(repo, socialClient)
+	blacklist := postgres.NewTokenBlacklistRepository(db)
+	useCase := usecase.NewAuthUseCase(repo, socialClient, blacklist)
 	authHandler := grpcadapter.NewAuthHandler(useCase)
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcadapter.AuthUnaryInterceptor()))

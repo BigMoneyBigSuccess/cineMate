@@ -2,7 +2,7 @@ grpc:
   addr: ":50053"
 
 postgres:
-  url: "postgres://social:socialpassword@postgres:5432/socialdb?sslmode=disable"
+  url: ""  # set SOCIAL_DATABASE_URL env var
 
 auth:
   host: "auth-service"

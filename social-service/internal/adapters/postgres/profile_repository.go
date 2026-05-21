@@ -7,6 +7,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/ports"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 var _ ports.ProfileRepository = (*ProfileRepository)(nil)
@@ -66,5 +67,8 @@ func (r *ProfileRepository) UpsertProfile(ctx context.Context, p domain.UserProf
 			bio        = EXCLUDED.bio,
 			updated_at = now()`
 	_, err := r.db.ExecContext(ctx, q, p.UserID, p.Username, p.Bio)
+	if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+		return domain.ErrUsernameTaken
+	}
 	return err
 }

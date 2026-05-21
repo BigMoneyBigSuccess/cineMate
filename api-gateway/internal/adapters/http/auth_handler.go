@@ -65,6 +65,31 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(RegisterResponse{UserID: userID.String()})
 }
 
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	token := bearerToken(r)
+	if token == "" {
+		writeErrorResponse(w, "unauthenticated", "authorization header is required")
+		return
+	}
+
+	if err := h.authClient.Logout(r.Context(), token); err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		writeGRPCErrorResponse(w, st.Code(), st.Message())
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
