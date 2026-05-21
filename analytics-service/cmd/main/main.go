@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"syscall"
 
+	aiadapter "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/ai"
 	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/engine"
 	grpcadapter "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/grpc"
 	movieservice "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/movie-service"
@@ -61,7 +62,9 @@ func main() {
 	recRepo := postgres.NewRecommendationRepository(db)
 
 	catalog := movieservice.NewMovieServiceClient(movieClient, cfg.MovieCollection.Timeout)
-	recEngine := engine.New(catalog)
+
+	aiClient := aiadapter.NewOpenRouterClient(cfg.OpenRouter.APIKey, cfg.OpenRouter.Model, cfg.OpenRouter.Timeout)
+	recEngine := engine.NewEngine(catalog, aiClient)
 
 	feedbackUC := usecase.NewFeedbackUseCase(feedbackRepo)
 	profileUC := usecase.NewUserProfileUseCase(profileRepo, feedbackRepo, catalog)

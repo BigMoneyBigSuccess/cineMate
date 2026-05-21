@@ -13,6 +13,7 @@ type Config struct {
 	Postgres        PostgresConfig       `yaml:"postgres"`
 	MovieCollection MovieCatalogConfig   `yaml:"movie_collection"`
 	Recommendation  RecommendationConfig `yaml:"recommendation"`
+	OpenRouter      OpenRouterConfig     `yaml:"open_router"`
 	ShutdownTimeout time.Duration        `yaml:"shutdown_timeout"`
 }
 
@@ -34,6 +35,12 @@ type RecommendationConfig struct {
 	CandidatePoolSize int `yaml:"candidate_pool_size"`
 }
 
+type OpenRouterConfig struct {
+	APIKey  string        `yaml:"api_key"`
+	Model   string        `yaml:"model"`
+	Timeout time.Duration `yaml:"timeout"`
+}
+
 func Default() Config {
 	return Config{
 		GRPC: GRPCConfig{
@@ -46,6 +53,10 @@ func Default() Config {
 		Recommendation: RecommendationConfig{
 			DefaultLimit:      10,
 			CandidatePoolSize: 100,
+		},
+		OpenRouter: OpenRouterConfig{
+			Model:   "openrouter/free",
+			Timeout: 60 * time.Second,
 		},
 		ShutdownTimeout: 10 * time.Second,
 	}
