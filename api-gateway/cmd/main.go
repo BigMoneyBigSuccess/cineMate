@@ -83,6 +83,8 @@ func run() error {
 	})))
 
 	
+	mux.HandleFunc("/api/v1/users/search", socialHandler.SearchUsers)
+
 	mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		switch {

@@ -171,6 +171,25 @@ func (h *SocialHandler) IsFollowing(ctx context.Context, req *socialv1.IsFollowi
 	return &socialv1.IsFollowingResponse{IsFollowing: isFollowing}, nil
 }
 
+func (h *SocialHandler) SearchUsers(ctx context.Context, req *socialv1.SearchUsersRequest) (*socialv1.SearchUsersResponse, error) {
+	profiles, total, err := h.useCase.SearchUsers(ctx, req.GetQuery(), req.GetLimit(), req.GetOffset())
+	if err != nil {
+		return nil, mapSocialError(err)
+	}
+
+	out := make([]*socialv1.UserProfile, len(profiles))
+	for i, p := range profiles {
+		out[i] = &socialv1.UserProfile{
+			UserId:    p.UserID.String(),
+			Username:  p.Username,
+			Bio:       p.Bio,
+			CreatedAt: timestamppb.New(p.CreatedAt),
+			UpdatedAt: timestamppb.New(p.UpdatedAt),
+		}
+	}
+	return &socialv1.SearchUsersResponse{Profiles: out, Total: total}, nil
+}
+
 func uuidsToStrings(ids []uuid.UUID) []string {
 	out := make([]string, len(ids))
 	for i, id := range ids {

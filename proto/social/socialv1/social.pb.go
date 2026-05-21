@@ -699,6 +699,118 @@ func (x *IsFollowingResponse) GetIsFollowing() bool {
 	return false
 }
 
+type SearchUsersRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Offset        int32                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchUsersRequest) Reset() {
+	*x = SearchUsersRequest{}
+	mi := &file_social_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchUsersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchUsersRequest) ProtoMessage() {}
+
+func (x *SearchUsersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_social_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchUsersRequest.ProtoReflect.Descriptor instead.
+func (*SearchUsersRequest) Descriptor() ([]byte, []int) {
+	return file_social_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SearchUsersRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *SearchUsersRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *SearchUsersRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+type SearchUsersResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profiles      []*UserProfile         `protobuf:"bytes,1,rep,name=profiles,proto3" json:"profiles,omitempty"`
+	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchUsersResponse) Reset() {
+	*x = SearchUsersResponse{}
+	mi := &file_social_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchUsersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchUsersResponse) ProtoMessage() {}
+
+func (x *SearchUsersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_social_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SearchUsersResponse.ProtoReflect.Descriptor instead.
+func (*SearchUsersResponse) Descriptor() ([]byte, []int) {
+	return file_social_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SearchUsersResponse) GetProfiles() []*UserProfile {
+	if x != nil {
+		return x.Profiles
+	}
+	return nil
+}
+
+func (x *SearchUsersResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
 var File_social_proto protoreflect.FileDescriptor
 
 const file_social_proto_rawDesc = "" +
@@ -748,7 +860,14 @@ const file_social_proto_rawDesc = "" +
 	"\vfollowed_id\x18\x02 \x01(\tR\n" +
 	"followedId\"8\n" +
 	"\x13IsFollowingResponse\x12!\n" +
-	"\fis_following\x18\x01 \x01(\bR\visFollowing2\xea\x04\n" +
+	"\fis_following\x18\x01 \x01(\bR\visFollowing\"X\n" +
+	"\x12SearchUsersRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x05R\x05limit\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x05R\x06offset\"_\n" +
+	"\x13SearchUsersResponse\x122\n" +
+	"\bprofiles\x18\x01 \x03(\v2\x16.social.v1.UserProfileR\bprofiles\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x05R\x05total2\xb8\x05\n" +
 	"\rSocialService\x12H\n" +
 	"\rCreateProfile\x12\x1f.social.v1.CreateProfileRequest\x1a\x16.google.protobuf.Empty\x12I\n" +
 	"\n" +
@@ -759,7 +878,8 @@ const file_social_proto_rawDesc = "" +
 	"\fUnfollowUser\x12\x1e.social.v1.UnfollowUserRequest\x1a\x16.google.protobuf.Empty\x12O\n" +
 	"\fGetFollowers\x12\x1e.social.v1.GetFollowersRequest\x1a\x1f.social.v1.GetFollowersResponse\x12O\n" +
 	"\fGetFollowing\x12\x1e.social.v1.GetFollowingRequest\x1a\x1f.social.v1.GetFollowingResponse\x12L\n" +
-	"\vIsFollowing\x12\x1d.social.v1.IsFollowingRequest\x1a\x1e.social.v1.IsFollowingResponseBGZEgithub.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1;socialv1b\x06proto3"
+	"\vIsFollowing\x12\x1d.social.v1.IsFollowingRequest\x1a\x1e.social.v1.IsFollowingResponse\x12L\n" +
+	"\vSearchUsers\x12\x1d.social.v1.SearchUsersRequest\x1a\x1e.social.v1.SearchUsersResponseBGZEgithub.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1;socialv1b\x06proto3"
 
 var (
 	file_social_proto_rawDescOnce sync.Once
@@ -773,7 +893,7 @@ func file_social_proto_rawDescGZIP() []byte {
 	return file_social_proto_rawDescData
 }
 
-var file_social_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_social_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_social_proto_goTypes = []any{
 	(*CreateProfileRequest)(nil),  // 0: social.v1.CreateProfileRequest
 	(*UserProfile)(nil),           // 1: social.v1.UserProfile
@@ -788,34 +908,39 @@ var file_social_proto_goTypes = []any{
 	(*GetFollowingResponse)(nil),  // 10: social.v1.GetFollowingResponse
 	(*IsFollowingRequest)(nil),    // 11: social.v1.IsFollowingRequest
 	(*IsFollowingResponse)(nil),   // 12: social.v1.IsFollowingResponse
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
-	(*emptypb.Empty)(nil),         // 14: google.protobuf.Empty
+	(*SearchUsersRequest)(nil),    // 13: social.v1.SearchUsersRequest
+	(*SearchUsersResponse)(nil),   // 14: social.v1.SearchUsersResponse
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(*emptypb.Empty)(nil),         // 16: google.protobuf.Empty
 }
 var file_social_proto_depIdxs = []int32{
-	13, // 0: social.v1.UserProfile.created_at:type_name -> google.protobuf.Timestamp
-	13, // 1: social.v1.UserProfile.updated_at:type_name -> google.protobuf.Timestamp
+	15, // 0: social.v1.UserProfile.created_at:type_name -> google.protobuf.Timestamp
+	15, // 1: social.v1.UserProfile.updated_at:type_name -> google.protobuf.Timestamp
 	1,  // 2: social.v1.GetProfileResponse.profile:type_name -> social.v1.UserProfile
-	0,  // 3: social.v1.SocialService.CreateProfile:input_type -> social.v1.CreateProfileRequest
-	2,  // 4: social.v1.SocialService.GetProfile:input_type -> social.v1.GetProfileRequest
-	4,  // 5: social.v1.SocialService.UpdateProfile:input_type -> social.v1.UpdateProfileRequest
-	5,  // 6: social.v1.SocialService.FollowUser:input_type -> social.v1.FollowUserRequest
-	6,  // 7: social.v1.SocialService.UnfollowUser:input_type -> social.v1.UnfollowUserRequest
-	7,  // 8: social.v1.SocialService.GetFollowers:input_type -> social.v1.GetFollowersRequest
-	9,  // 9: social.v1.SocialService.GetFollowing:input_type -> social.v1.GetFollowingRequest
-	11, // 10: social.v1.SocialService.IsFollowing:input_type -> social.v1.IsFollowingRequest
-	14, // 11: social.v1.SocialService.CreateProfile:output_type -> google.protobuf.Empty
-	3,  // 12: social.v1.SocialService.GetProfile:output_type -> social.v1.GetProfileResponse
-	14, // 13: social.v1.SocialService.UpdateProfile:output_type -> google.protobuf.Empty
-	14, // 14: social.v1.SocialService.FollowUser:output_type -> google.protobuf.Empty
-	14, // 15: social.v1.SocialService.UnfollowUser:output_type -> google.protobuf.Empty
-	8,  // 16: social.v1.SocialService.GetFollowers:output_type -> social.v1.GetFollowersResponse
-	10, // 17: social.v1.SocialService.GetFollowing:output_type -> social.v1.GetFollowingResponse
-	12, // 18: social.v1.SocialService.IsFollowing:output_type -> social.v1.IsFollowingResponse
-	11, // [11:19] is the sub-list for method output_type
-	3,  // [3:11] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	1,  // 3: social.v1.SearchUsersResponse.profiles:type_name -> social.v1.UserProfile
+	0,  // 4: social.v1.SocialService.CreateProfile:input_type -> social.v1.CreateProfileRequest
+	2,  // 5: social.v1.SocialService.GetProfile:input_type -> social.v1.GetProfileRequest
+	4,  // 6: social.v1.SocialService.UpdateProfile:input_type -> social.v1.UpdateProfileRequest
+	5,  // 7: social.v1.SocialService.FollowUser:input_type -> social.v1.FollowUserRequest
+	6,  // 8: social.v1.SocialService.UnfollowUser:input_type -> social.v1.UnfollowUserRequest
+	7,  // 9: social.v1.SocialService.GetFollowers:input_type -> social.v1.GetFollowersRequest
+	9,  // 10: social.v1.SocialService.GetFollowing:input_type -> social.v1.GetFollowingRequest
+	11, // 11: social.v1.SocialService.IsFollowing:input_type -> social.v1.IsFollowingRequest
+	13, // 12: social.v1.SocialService.SearchUsers:input_type -> social.v1.SearchUsersRequest
+	16, // 13: social.v1.SocialService.CreateProfile:output_type -> google.protobuf.Empty
+	3,  // 14: social.v1.SocialService.GetProfile:output_type -> social.v1.GetProfileResponse
+	16, // 15: social.v1.SocialService.UpdateProfile:output_type -> google.protobuf.Empty
+	16, // 16: social.v1.SocialService.FollowUser:output_type -> google.protobuf.Empty
+	16, // 17: social.v1.SocialService.UnfollowUser:output_type -> google.protobuf.Empty
+	8,  // 18: social.v1.SocialService.GetFollowers:output_type -> social.v1.GetFollowersResponse
+	10, // 19: social.v1.SocialService.GetFollowing:output_type -> social.v1.GetFollowingResponse
+	12, // 20: social.v1.SocialService.IsFollowing:output_type -> social.v1.IsFollowingResponse
+	14, // 21: social.v1.SocialService.SearchUsers:output_type -> social.v1.SearchUsersResponse
+	13, // [13:22] is the sub-list for method output_type
+	4,  // [4:13] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_social_proto_init() }
@@ -829,7 +954,7 @@ func file_social_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_social_proto_rawDesc), len(file_social_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -18,6 +18,7 @@ service SocialService {
   rpc GetFollowing(GetFollowingRequest) returns (GetFollowingResponse);
   rpc IsFollowing(IsFollowingRequest) returns (IsFollowingResponse);
 
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
 }
 
 message CreateProfileRequest {
@@ -83,4 +84,15 @@ message IsFollowingRequest {
 
 message IsFollowingResponse {
   bool is_following = 1;
+}
+
+message SearchUsersRequest {
+  string query  = 1;
+  int32  limit  = 2;
+  int32  offset = 3;
+}
+
+message SearchUsersResponse {
+  repeated UserProfile profiles = 1;
+  int32                total    = 2;
 }

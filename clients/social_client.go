@@ -80,3 +80,7 @@ func (c *SocialClient) IsFollowing(ctx context.Context, followerID, followedID s
 	}
 	return resp.IsFollowing, nil
 }
+
+func (c *SocialClient) SearchUsers(ctx context.Context, query string, limit, offset int32) (*socialv1.SearchUsersResponse, error) {
+	return c.client.SearchUsers(ctx, &socialv1.SearchUsersRequest{Query: query, Limit: limit, Offset: offset})
+}
