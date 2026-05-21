@@ -1,0 +1,58 @@
+services:
+  api-gateway:
+    image: absolutedock3r/cinemate-api-gateway:latest
+    ports:
+      - "8080:8080"         
+    environment:
+      - AUTH_SERVICE_URL=http://auth-service:50051
+      - MOVIE_SERVICE_URL=http://movie-service:50052
+      - SOCIAL_SERVICE_URL=http://social-service:50053
+    depends_on:
+      - auth-service
+      - movie-service
+      - social-service
+      - analytics-service
+
+  auth-service:
+    image: yourdockerhub/cinemate-auth-service:latest
+    ports:
+      - "50051:50051"        #grpc port?
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/auth
+    depends_on:
+      - db
+
+  movie-service:
+    image: yourdockerhub/cinemate-movie-service:latest
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/movie
+    depends_on:
+      - db
+
+  social-service:
+    image: yourdockerhub/cinemate-social-service:latest
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/social
+    depends_on:
+      - db
+
+  analytics-service:
+    image: yourdockerhub/cinemate-analytics-service:latest
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/analytics
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pswd
+      POSTGRES_DB: cinemate
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pg_data:

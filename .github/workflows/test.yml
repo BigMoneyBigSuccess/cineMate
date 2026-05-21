@@ -1,0 +1,95 @@
+name: Build & Test app
+
+on:
+  push:
+    branches:
+      - main
+      - '**-dev'
+      - 'feature/**'
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Install dependencies
+        run: find . -name "go.mod" -execdir go mod tidy \;
+      
+     # - name: Install golangci-lint
+     #   run: |
+     #     wget https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-amd64.tar.gz
+     #     tar -xzf golangci-lint-2.12.2-linux-amd64.tar.gz
+     #     sudo mv golangci-lint-2.12.2-linux-amd64/golangci-lint /usr/local/bin/
+      
+     # - name: Run golangci-lint on each module
+     #   run: |
+     #     for mod in $(find . -name "go.mod" -exec dirname {} \;); do
+     #       echo "Linting $mod"
+     #       (cd "$mod" && golangci-lint run --default=all)
+     #     done
+
+      - name: Run tests in all modules
+        run: |
+          for mod in $(find . -name "go.mod" -exec dirname {} \; | grep -v -E 'clients|proto'); do
+            echo "Testing $mod"
+            (cd "$mod" && go test -v ./...)
+          done
+
+  build-images:
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+    strategy:
+      matrix:
+        service:
+          - name: api-gateway
+            context: .
+            dockerfile: ./api-gateway/Dockerfile
+            tag: cinemate-api-gateway
+          - name: auth-service
+            context: .
+            dockerfile: ./auth-service/Dockerfile
+            tag: cinemate-auth-service
+          - name: movie-service
+            context: .
+            dockerfile: ./movie-service/Dockerfile
+            tag: cinemate-movie-service
+          - name: social-service
+            context: .
+            dockerfile: ./social-service/Dockerfile
+            tag: cinemate-social-service
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      
+      - name: Dockerhub login
+        uses: docker/login-action@v4
+        with:
+          username: ${{secrets.DOCKER_HUB_USERNAME}}
+          password: ${{secrets.DOCKER_HUB_ACCESS_TOKEN}}
+
+      - name: Build and push Docker image of ${{matrix.service.name}}
+        if: success()
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{matrix.service.context}}
+          dockerfile: ${{matrix.service.dockerfile}}
+          push: true
+          tags: ${{secrets.DOCKER_HUB_USERNAME}}/${{matrix.service.tag}}:latest
+
+      #- name: Deploy to server
+      #  uses: appleboy/ssh-action@v1
+      #  with:
+      #    host: ${{ secrets.SERVER_IP }}
+      #    username: ${{ secrets.SERVER_USER }}
+      #    key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #    script: |
+      #      cd /opt/cinemate
+      #      docker-compose pull
+      #      docker-compose up -d --force-recreate
