@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/ports"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/ports"
 
 	"github.com/google/uuid"
 )
@@ -14,14 +14,21 @@ import (
 // Engine implements ports.RecommendationEngine. It routes to a strategy-specific
 // candidate fetch and then applies shared dedup + ranking logic.
 type Engine struct {
-	movies ports.MovieRepository
+	movies   ports.MovieRepository
+	aiClient ports.AIClient // nil when AI strategy is not configured
 }
 
-func New(movies ports.MovieRepository) *Engine {
-	return &Engine{movies: movies}
+func NewEngine(movies ports.MovieRepository, aiClient ports.AIClient) *Engine {
+	return &Engine{movies: movies, aiClient: aiClient}
 }
 
 func (e *Engine) Recommend(ctx context.Context, filter ports.RecommendationFilter) ([]domain.MovieRecommendation, error) {
+	// AI strategy returns the raw model text as a single recommendation and
+	// bypasses the catalog-based candidate/ranking pipeline entirely.
+	if filter.Strategy == domain.StrategyAIModelBased {
+		return e.recommendByAI(ctx, filter)
+	}
+
 	var (
 		candidates []domain.MovieSnapshot
 		err        error
@@ -36,8 +43,6 @@ func (e *Engine) Recommend(ctx context.Context, filter ports.RecommendationFilte
 		candidates, err = e.candidatesByActors(ctx, filter)
 	case domain.StrategyDirectorsBased:
 		candidates, err = e.candidatesByDirectors(ctx, filter)
-	case domain.StrategyAIModelBased:
-		candidates, err = e.candidatesByAI(ctx, filter)
 	default:
 		return nil, fmt.Errorf("unknown recommendation strategy: %s", filter.Strategy)
 	}
@@ -57,7 +62,9 @@ func (e *Engine) rankCandidates(candidates []domain.MovieSnapshot, filter ports.
 		seen[fb.MovieID] = struct{}{}
 	}
 	for _, r := range filter.RecentRecommendations {
-		seen[r.MovieID] = struct{}{}
+		if r.MovieID != nil {
+			seen[*r.MovieID] = struct{}{}
+		}
 	}
 
 	sessionID := uuid.New()
@@ -69,11 +76,12 @@ func (e *Engine) rankCandidates(candidates []domain.MovieSnapshot, filter ports.
 		if _, ok := seen[m.MovieID]; ok {
 			continue
 		}
+		movieID := m.MovieID
 		recs = append(recs, domain.MovieRecommendation{
 			RecommendationID: uuid.New(),
 			SessionID:        sessionID,
 			UserID:           filter.Profile.UserID,
-			MovieID:          m.MovieID,
+			MovieID:          &movieID,
 			Rank:             rank,
 			Strategy:         filter.Strategy,
 			GeneratedAt:      now,

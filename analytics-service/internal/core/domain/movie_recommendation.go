@@ -16,6 +16,14 @@ const (
 	StrategyAIModelBased           RecommendationStrategy = "ai_model_based"
 )
 
+var ValidStrategies = map[RecommendationStrategy]struct{}{
+	StrategyPreferenceProfileBased: {},
+	StrategyGenresBased:            {},
+	StrategyActorsBased:            {},
+	StrategyDirectorsBased:         {},
+	StrategyAIModelBased:           {},
+}
+
 type InteractionType string
 
 const (
@@ -35,7 +43,8 @@ type MovieRecommendation struct {
 	RecommendationID uuid.UUID              `json:"recommendation_id"`
 	SessionID        uuid.UUID              `json:"session_id"`
 	UserID           uuid.UUID              `json:"user_id"`
-	MovieID          uuid.UUID              `json:"movie_id"`
+	MovieID          *uuid.UUID             `json:"movie_id,omitempty"`
+	AIResponse       *string                `json:"ai_response,omitempty"`
 	Rank             int                    `json:"rank"`
 	Strategy         RecommendationStrategy `json:"strategy"`
 	GeneratedAt      time.Time              `json:"generated_at"`
@@ -52,20 +61,16 @@ func (r MovieRecommendation) Validate() error {
 	if r.UserID == uuid.Nil {
 		return ErrInvalidMovieRecommendation
 	}
-	if r.MovieID == uuid.Nil {
+	if r.MovieID == nil && r.AIResponse == nil {
+		return ErrInvalidMovieRecommendation
+	}
+	if r.MovieID != nil && *r.MovieID == uuid.Nil {
 		return ErrInvalidMovieRecommendation
 	}
 	if r.Rank < 1 {
 		return ErrInvalidMovieRecommendation
 	}
-	var validStrategies = map[RecommendationStrategy]bool{
-		StrategyPreferenceProfileBased: true,
-		StrategyGenresBased:            true,
-		StrategyActorsBased:            true,
-		StrategyDirectorsBased:         true,
-		StrategyAIModelBased:           true,
-	}
-	if !validStrategies[r.Strategy] {
+	if _, ok := ValidStrategies[r.Strategy]; !ok {
 		return ErrInvalidMovieRecommendation
 	}
 	if r.GeneratedAt.IsZero() {
