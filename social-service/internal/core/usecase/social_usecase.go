@@ -47,3 +47,7 @@ func (uc *SocialUseCase) GetFollowing(ctx context.Context, userID uuid.UUID, lim
 func (uc *SocialUseCase) IsFollowing(ctx context.Context, followerID, followedID uuid.UUID) (bool, error) {
 	return uc.follows.IsFollowing(ctx, followerID, followedID)
 }
+
+func (uc *SocialUseCase) SearchUsers(ctx context.Context, query string, limit, offset int32) ([]domain.UserProfile, int32, error) {
+	return uc.profiles.SearchProfiles(ctx, query, limit, offset)
+}

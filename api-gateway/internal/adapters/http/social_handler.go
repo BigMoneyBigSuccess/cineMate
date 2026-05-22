@@ -212,6 +212,34 @@ func (h *SocialHandler) IsFollowing(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]any{"is_following": isFollowing})
 }
 
+func (h *SocialHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		http.Error(w, "q query param is required", http.StatusBadRequest)
+		return
+	}
+	limit, offset := parsePagination(r)
+
+	resp, err := h.socialClient.SearchUsers(r.Context(), query, limit, offset)
+	if err != nil {
+		st, ok := status.FromError(err)
+		if !ok {
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		writeGRPCErrorResponse(w, st.Code(), st.Message())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"profiles": resp.Profiles, "total": resp.Total})
+}
+
 func bearerToken(r *http.Request) string {
 	h := r.Header.Get("Authorization")
 	if strings.HasPrefix(h, "Bearer ") {

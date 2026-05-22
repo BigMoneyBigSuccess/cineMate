@@ -87,6 +87,19 @@ func overrideFromEnv(cfg *Config) error {
 		}
 		cfg.ShutdownTimeout = parsed
 	}
+	if value := strings.TrimSpace(os.Getenv("ANALYTICS_OPENROUTER_API_KEY")); value != "" {
+		cfg.OpenRouter.APIKey = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ANALYTICS_OPENROUTER_MODEL")); value != "" {
+		cfg.OpenRouter.Model = value
+	}
+	if value := strings.TrimSpace(os.Getenv("ANALYTICS_OPENROUTER_TIMEOUT")); value != "" {
+		parsed, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("parse ANALYTICS_OPENROUTER_TIMEOUT: %w", err)
+		}
+		cfg.OpenRouter.Timeout = parsed
+	}
 
 	return nil
 }

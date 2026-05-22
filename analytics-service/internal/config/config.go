@@ -9,11 +9,12 @@ import (
 const DefaultPath = "configs/config.local.yaml"
 
 type Config struct {
-	GRPC            GRPCConfig            `yaml:"grpc"`
-	Postgres        PostgresConfig        `yaml:"postgres"`
-	MovieCollection MovieCollectionConfig `yaml:"movie_collection"`
-	Recommendation  RecommendationConfig  `yaml:"recommendation"`
-	ShutdownTimeout time.Duration         `yaml:"shutdown_timeout"`
+	GRPC            GRPCConfig           `yaml:"grpc"`
+	Postgres        PostgresConfig       `yaml:"postgres"`
+	MovieCollection MovieCatalogConfig   `yaml:"movie_collection"`
+	Recommendation  RecommendationConfig `yaml:"recommendation"`
+	OpenRouter      OpenRouterConfig     `yaml:"open_router"`
+	ShutdownTimeout time.Duration        `yaml:"shutdown_timeout"`
 }
 
 type GRPCConfig struct {
@@ -24,7 +25,7 @@ type PostgresConfig struct {
 	URL string `yaml:"url"`
 }
 
-type MovieCollectionConfig struct {
+type MovieCatalogConfig struct {
 	Addr    string        `yaml:"addr"`
 	Timeout time.Duration `yaml:"timeout"`
 }
@@ -34,18 +35,28 @@ type RecommendationConfig struct {
 	CandidatePoolSize int `yaml:"candidate_pool_size"`
 }
 
+type OpenRouterConfig struct {
+	APIKey  string        `yaml:"api_key"`
+	Model   string        `yaml:"model"`
+	Timeout time.Duration `yaml:"timeout"`
+}
+
 func Default() Config {
 	return Config{
 		GRPC: GRPCConfig{
 			Addr: ":8081",
 		},
-		MovieCollection: MovieCollectionConfig{
+		MovieCollection: MovieCatalogConfig{
 			Addr:    "localhost:8080",
 			Timeout: 3 * time.Second,
 		},
 		Recommendation: RecommendationConfig{
 			DefaultLimit:      10,
 			CandidatePoolSize: 100,
+		},
+		OpenRouter: OpenRouterConfig{
+			Model:   "openrouter/free",
+			Timeout: 60 * time.Second,
 		},
 		ShutdownTimeout: 10 * time.Second,
 	}

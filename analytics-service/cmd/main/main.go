@@ -2,106 +2,109 @@ package main
 
 import (
 	"context"
-	"errors"
-	"flag"
-	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
-	"time"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/adapters/engine"
-	moviecollection "github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/adapters/movie-collection-service"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/adapters/postgres"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/config"
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/usecase"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	aiadapter "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/ai"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/engine"
+	grpcadapter "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/grpc"
+	movieservice "github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/movie-service"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/adapters/postgres"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/config"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/usecase"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
-	}
-}
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
-func run() error {
-	cfg, err := config.Load(resolveConfigPath())
+	cfg, err := config.Load(os.Getenv("ANALYTICS_CONFIG_PATH"))
 	if err != nil {
-		return err
+		log.Error("load config", "error", err)
+		os.Exit(1)
 	}
+	log.Info("config loaded", "summary", cfg.String())
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	ctx := context.Background()
 
-	pool, err := postgres.NewPool(ctx, cfg.Postgres)
+	db, err := postgres.NewPool(ctx, cfg.Postgres)
 	if err != nil {
-		return fmt.Errorf("init postgres: %w", err)
+		log.Error("connect postgres", "error", err)
+		os.Exit(1)
 	}
-	defer pool.Close()
+	defer db.Close()
+	log.Info("postgres connected")
 
-	movieConn, err := moviecollection.NewConn(cfg.MovieCollection)
+	host, portStr, err := net.SplitHostPort(cfg.MovieCollection.Addr)
 	if err != nil {
-		return fmt.Errorf("init movie collection client: %w", err)
+		log.Error("parse movie collection addr", "addr", cfg.MovieCollection.Addr, "error", err)
+		os.Exit(1)
 	}
-	defer movieConn.Close()
-
-	movieClient := moviecollection.New(movieConn, cfg.MovieCollection.Timeout)
-	feedbackRepo := postgres.NewFeedbackRepository(pool)
-	recRepo := postgres.NewRecommendationRepository(pool)
-	profileRepo := postgres.NewUserProfileRepository(pool)
-	recommendationEngine := engine.New(movieClient)
-
-	_ = usecase.NewRecommendationUseCase(profileRepo, feedbackRepo, recRepo, recommendationEngine)
-	_ = usecase.NewFeedbackUseCase(feedbackRepo)
-	_ = usecase.NewUserProfileUseCase(profileRepo, feedbackRepo, movieClient)
-
-	grpcServer := grpc.NewServer()
-	reflection.Register(grpcServer)
-
-	listener, err := net.Listen("tcp", cfg.GRPC.Addr)
+	port, err := strconv.Atoi(portStr)
 	if err != nil {
-		return fmt.Errorf("listen grpc on %s: %w", cfg.GRPC.Addr, err)
+		log.Error("parse movie collection port", "port", portStr, "error", err)
+		os.Exit(1)
 	}
-	defer listener.Close()
+	movieClient, err := clients.NewMovieClient(host, port)
+	if err != nil {
+		log.Error("connect movie-collection", "error", err)
+		os.Exit(1)
+	}
+	defer movieClient.Close()
+	log.Info("movie-collection connected", "addr", cfg.MovieCollection.Addr)
 
+	feedbackRepo := postgres.NewFeedbackRepository(db)
+	profileRepo := postgres.NewUserProfileRepository(db)
+	recRepo := postgres.NewRecommendationRepository(db)
+
+	catalog := movieservice.NewMovieServiceClient(movieClient, cfg.MovieCollection.Timeout)
+
+	aiClient := aiadapter.NewOpenRouterClient(cfg.OpenRouter.APIKey, cfg.OpenRouter.Model, cfg.OpenRouter.Timeout)
+	recEngine := engine.NewEngine(catalog, aiClient)
+
+	feedbackUC := usecase.NewFeedbackUseCase(feedbackRepo)
+	profileUC := usecase.NewUserProfileUseCase(profileRepo, feedbackRepo, catalog)
+	recUC := usecase.NewRecommendationUseCase(profileRepo, feedbackRepo, recRepo, recEngine)
+
+	srv := grpcadapter.NewServer(log, feedbackUC, profileUC, recUC, catalog, cfg.Recommendation.DefaultLimit)
+
+	lis, err := net.Listen("tcp", cfg.GRPC.Addr)
+	if err != nil {
+		log.Error("listen", "addr", cfg.GRPC.Addr, "error", err)
+		os.Exit(1)
+	}
+
+	log.Info("analytics gRPC server starting", "addr", cfg.GRPC.Addr)
 	go func() {
-		<-ctx.Done()
-		shutdownGRPCServer(grpcServer, cfg.ShutdownTimeout)
+		if err := srv.Serve(lis); err != nil {
+			log.Error("server exited", "error", err)
+		}
 	}()
 
-	log.Printf("analytics service gRPC listening on %s", cfg.GRPC.Addr)
-	if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-		return fmt.Errorf("serve grpc: %w", err)
-	}
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
 
-	return nil
-}
+	log.Info("shutting down")
 
-func shutdownGRPCServer(server *grpc.Server, timeout time.Duration) {
-	done := make(chan struct{})
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+	defer cancel()
+
+	stopped := make(chan struct{})
 	go func() {
-		server.GracefulStop()
-		close(done)
+		srv.GracefulStop()
+		close(stopped)
 	}()
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
+
 	select {
-	case <-done:
-	case <-timer.C:
-		server.Stop()
+	case <-stopped:
+		log.Info("shutdown complete")
+	case <-shutdownCtx.Done():
+		log.Warn("shutdown timeout exceeded, forcing stop")
+		srv.Stop()
 	}
-}
-
-func resolveConfigPath() string {
-	defaultPath := config.DefaultPath
-	if v := os.Getenv("ANALYTICS_CONFIG_PATH"); v != "" {
-		defaultPath = v
-	}
-	configPath := flag.String("config", defaultPath, "path to YAML config file")
-	flag.Parse()
-	return *configPath
 }

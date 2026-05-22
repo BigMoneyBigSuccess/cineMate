@@ -25,6 +25,8 @@ func mapSocialError(err error) error {
 		return status.Error(codes.AlreadyExists, err.Error())
 	case errors.Is(err, domain.ErrNotFollowing):
 		return status.Error(codes.NotFound, err.Error())
+	case errors.Is(err, domain.ErrUsernameTaken):
+		return status.Error(codes.AlreadyExists, err.Error())
 default:
 		return status.Error(codes.Internal, err.Error())
 	}

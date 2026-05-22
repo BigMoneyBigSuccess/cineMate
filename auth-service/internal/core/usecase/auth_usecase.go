@@ -12,12 +12,13 @@ import (
 )
 
 type AuthUseCase struct {
-	repo   ports.UserRepository
-	social ports.ProfileCreator
+	repo      ports.UserRepository
+	social    ports.ProfileCreator
+	blacklist ports.TokenBlacklist
 }
 
-func NewAuthUseCase(repo ports.UserRepository, social ports.ProfileCreator) *AuthUseCase {
-	return &AuthUseCase{repo: repo, social: social}
+func NewAuthUseCase(repo ports.UserRepository, social ports.ProfileCreator, blacklist ports.TokenBlacklist) *AuthUseCase {
+	return &AuthUseCase{repo: repo, social: social, blacklist: blacklist}
 }
 
 func (uc *AuthUseCase) Register(ctx context.Context, email, password string) (uuid.UUID, error) {
@@ -50,6 +51,7 @@ func (uc *AuthUseCase) Login(ctx context.Context, email, password string) (strin
 	if err != nil {
 		return "", err
 	}
+
 	if user == nil {
 		return "", domain.ErrUserNotFound
 	}
@@ -62,5 +64,23 @@ func (uc *AuthUseCase) Login(ctx context.Context, email, password string) (strin
 }
 
 func (uc *AuthUseCase) ValidateToken(ctx context.Context, token string) (uuid.UUID, error) {
+	revoked, err := uc.blacklist.IsRevoked(ctx, utils.HashToken(token))
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if revoked {
+		return uuid.Nil, domain.ErrInvalidCredentials
+	}
+
 	return utils.ParseJWT(token)
+}
+
+func (uc *AuthUseCase) Logout(ctx context.Context, token string) error {
+	exp, err := utils.GetTokenExpiry(token)
+	if err != nil {
+		return nil // already invalid, nothing to revoke
+	}
+
+	return uc.blacklist.Revoke(ctx, utils.HashToken(token), exp)
 }

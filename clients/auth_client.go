@@ -50,6 +50,11 @@ func (c *AuthClient) Login(ctx context.Context, email, password string) (string,
 	return resp.Token, nil
 }
 
+func (c *AuthClient) Logout(ctx context.Context, token string) error {
+	_, err := c.client.Logout(ctx, &authv1.LogoutRequest{Token: token})
+	return err
+}
+
 func (c *AuthClient) ValidateToken(ctx context.Context, token string) (uuid.UUID, bool, string) {
 	resp, err := c.client.ValidateToken(ctx, &authv1.ValidateTokenRequest{Token: token})
 	if err != nil {

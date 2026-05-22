@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/goccy/go-yaml"
@@ -20,20 +21,28 @@ func Load(path string) (Config, error) {
 		return Config{}, fmt.Errorf("parse config file: %w", err)
 	}
 
-	if databaseURL := os.Getenv("DATABASE_URL"); databaseURL != "" {
-		cfg.Postgres.URL = databaseURL
+	if v := os.Getenv("AUTH_DATABASE_URL"); v != "" {
+		cfg.Postgres.URL = v
 	}
-
-	if grpcAddr := os.Getenv("GRPC_ADDR"); grpcAddr != "" {
-		cfg.GRPC.Addr = grpcAddr
+	if v := os.Getenv("AUTH_GRPC_ADDR"); v != "" {
+		cfg.GRPC.Addr = v
 	}
-
-	if shutdownTimeout := os.Getenv("SHUTDOWN_TIMEOUT"); shutdownTimeout != "" {
-		duration, err := time.ParseDuration(shutdownTimeout)
+	if v := os.Getenv("AUTH_SOCIAL_HOST"); v != "" {
+		cfg.Social.Host = v
+	}
+	if v := os.Getenv("AUTH_SOCIAL_PORT"); v != "" {
+		port, err := strconv.Atoi(v)
 		if err != nil {
-			return Config{}, fmt.Errorf("parse shutdown timeout: %w", err)
+			return Config{}, fmt.Errorf("parse AUTH_SOCIAL_PORT: %w", err)
 		}
-		cfg.ShutdownTimeout = duration
+		cfg.Social.Port = port
+	}
+	if v := os.Getenv("AUTH_SHUTDOWN_TIMEOUT"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return Config{}, fmt.Errorf("parse AUTH_SHUTDOWN_TIMEOUT: %w", err)
+		}
+		cfg.ShutdownTimeout = d
 	}
 
 	if err := cfg.Validate(); err != nil {

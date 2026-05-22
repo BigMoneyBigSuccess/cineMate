@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
 
 	"github.com/google/uuid"
 )
@@ -18,6 +18,7 @@ type RecommendationRepository interface {
 }
 
 type RecommendationHistoryFilter struct {
-	Limit  int
-	Offset int
+	Strategy domain.RecommendationStrategy
+	Limit    int
+	Offset   int
 }

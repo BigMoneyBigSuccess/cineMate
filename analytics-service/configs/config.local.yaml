@@ -12,4 +12,9 @@ recommendation:
   default_limit: 10
   candidate_pool_size: 100
 
+open_router:
+  api_key: ""
+  model: "openrouter/free"
+  timeout: 60s
+
 shutdown_timeout: 10s

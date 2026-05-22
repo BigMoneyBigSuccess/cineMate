@@ -1,13 +1,20 @@
-# syntax=docker/dockerfile:1
-FROM golang:1.25-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 go build -o /auth-service ./cmd/main.go
+FROM golang:1.26-alpine AS builder
 
-FROM alpine:3.19
-RUN apk add --no-cache ca-certificates
-COPY --from=builder /auth-service /auth-service
-EXPOSE 9090
-ENTRYPOINT ["/auth-service"]
+WORKDIR /build
+
+COPY auth-service/ auth-service/
+
+RUN cd auth-service && CGO_ENABLED=0 GOOS=linux go build \
+    -mod=vendor \
+    -trimpath -ldflags="-s -w" \
+    -o /auth ./cmd
+
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /auth /auth
+COPY auth-service/configs/config.docker.yaml /configs/config.docker.yaml
+
+EXPOSE 50051
+
+ENTRYPOINT ["/auth"]

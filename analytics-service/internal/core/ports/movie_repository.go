@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 
-	"github.com/BigMoneyBigSuccess/cineMate/analytics-service/internal/core/domain"
+	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
 
 	"github.com/google/uuid"
 )
