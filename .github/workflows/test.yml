@@ -79,7 +79,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: ${{matrix.service.context}}
-          dockerfile: ${{matrix.service.dockerfile}}
+          file: ${{matrix.service.dockerfile}}
           push: true
           tags: ${{secrets.DOCKER_HUB_USERNAME}}/${{matrix.service.tag}}:latest
 
