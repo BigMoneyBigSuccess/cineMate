@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -18,7 +19,10 @@ type SocialClient struct {
 
 func NewSocialClient(host string, port int) (*SocialClient, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(logger.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to social service at %s: %w", addr, err)
 	}

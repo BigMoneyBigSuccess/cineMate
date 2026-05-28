@@ -17,10 +17,10 @@ func mapFilmToMovie(item FilmItem, detail *FilmDetail, staff []StaffMember) doma
 		LastSyncAt:    time.Now().UTC(),
 	}
 
-	if item.NameOriginal != nil && strings.TrimSpace(*item.NameOriginal) != "" {
-		movie.Title = *item.NameOriginal
-	} else {
+	if item.NameRu != "" {
 		movie.Title = item.NameRu
+	} else {
+		movie.Title = *item.NameOriginal
 	}
 
 	if len(item.Countries) > 0 {

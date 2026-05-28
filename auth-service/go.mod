@@ -14,6 +14,7 @@ require (
 
 require (
 	github.com/BigMoneyBigSuccess/cineMate/clients v0.1.0
+	github.com/BigMoneyBigSuccess/cineMate/logger v0.1.0
 	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.12.3
@@ -24,5 +25,6 @@ require google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0
 
 replace (
 	github.com/BigMoneyBigSuccess/cineMate/clients => ../clients
+	github.com/BigMoneyBigSuccess/cineMate/logger => ../logger
 	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
 )

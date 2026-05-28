@@ -5,29 +5,35 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	httpadapter "github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/adapters/http"
-	"github.com/BigMoneyBigSuccess/cineMate/clients"
-	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/config"
 	"strings"
+
+	httpadapter "github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/adapters/http"
+	"github.com/BigMoneyBigSuccess/cineMate/api-gateway/internal/config"
+	"github.com/BigMoneyBigSuccess/cineMate/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
+	log := logger.New("api-gateway")
+	slog.SetDefault(log)
+
+	if err := run(log); err != nil {
+		log.Error("api-gateway exited with error", "error", err)
+		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(log *slog.Logger) error {
 	cfg, err := config.Load(resolveConfigPath())
 	if err != nil {
-		return err
+		return fmt.Errorf("load config: %w", err)
 	}
 
 	authClient, err := clients.NewAuthClient(cfg.Auth.Host, cfg.Auth.Port)
@@ -35,25 +41,28 @@ func run() error {
 		return fmt.Errorf("init auth client: %w", err)
 	}
 	defer authClient.Close()
+	log.Info("auth client connected", "host", cfg.Auth.Host, "port", cfg.Auth.Port)
 
 	movieClient, err := clients.NewMovieClient(cfg.Movies.Host, cfg.Movies.Port)
 	if err != nil {
 		return fmt.Errorf("init movie client: %w", err)
 	}
 	defer movieClient.Close()
+	log.Info("movie client connected", "host", cfg.Movies.Host, "port", cfg.Movies.Port)
 
 	socialClient, err := clients.NewSocialClient(cfg.Social.Host, cfg.Social.Port)
 	if err != nil {
 		return fmt.Errorf("init social client: %w", err)
 	}
 	defer socialClient.Close()
+	log.Info("social client connected", "host", cfg.Social.Host, "port", cfg.Social.Port)
 
 	analyticsClient, err := clients.NewAnalyticsClient(cfg.Analytics.Host, cfg.Analytics.Port)
 	if err != nil {
 		return fmt.Errorf("init analytics client: %w", err)
 	}
 	defer analyticsClient.Close()
-
+	log.Info("analytics client connected", "host", cfg.Analytics.Host, "port", cfg.Analytics.Port)
 
 	authHandler := httpadapter.NewAuthHandler(authClient)
 	movieHandler := httpadapter.NewMovieHandler(movieClient)
@@ -62,18 +71,14 @@ func run() error {
 	reviewHandler := httpadapter.NewReviewHandler(analyticsClient)
 	recommendationsHandler := httpadapter.NewRecommendationsHandler(analyticsClient)
 
-	
 	mux := http.NewServeMux()
 
-	
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/logout", authHandler.Logout)
 
-	
 	authMiddleware := httpadapter.AuthMiddleware(authClient, true)
 
-	
 	mux.HandleFunc("/api/v1/movies", movieHandler.ListMovies)
 
 	// /api/v1/movies/{id}              → GetMovieByID (public)
@@ -118,7 +123,6 @@ func run() error {
 		}
 	})))
 
-	
 	mux.Handle("/api/v1/watchlist", authMiddleware(http.HandlerFunc(movieHandler.GetWatchlist)))
 	mux.Handle("/api/v1/watchlist/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -131,7 +135,6 @@ func run() error {
 		}
 	})))
 
-	
 	mux.HandleFunc("/api/v1/users/search", socialHandler.SearchUsers)
 
 	mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
@@ -175,9 +178,8 @@ func run() error {
 		}
 	})))
 
-	handler := httpadapter.CORSMiddleware(mux)
+	handler := logger.HTTPMiddleware(log)(httpadapter.CORSMiddleware(mux))
 
-	
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:      handler,
@@ -186,20 +188,18 @@ func run() error {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	
 	go func() {
-		log.Printf("API Gateway listening on %s", server.Addr)
+		log.Info("api-gateway listening", "addr", server.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Printf("server error: %v", err)
+			log.Error("http server error", "error", err)
 		}
 	}()
 
-	
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
+	log.Info("shutdown signal received")
 
-	
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
@@ -207,7 +207,7 @@ func run() error {
 		return fmt.Errorf("server shutdown: %w", err)
 	}
 
-	log.Println("API Gateway shutdown successfully")
+	log.Info("api-gateway shutdown complete")
 	return nil
 }
 
@@ -219,7 +219,6 @@ func resolveConfigPath() string {
 		return *configPath
 	}
 
-	
 	defaultPaths := []string{
 		"./configs/config.local.yaml",
 		"./configs/config.docker.yaml",
@@ -232,5 +231,5 @@ func resolveConfigPath() string {
 		}
 	}
 
-	return defaultPaths[0] 
+	return defaultPaths[0]
 }

@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/BigMoneyBigSuccess/cineMate/clients v0.1.0
+	github.com/BigMoneyBigSuccess/cineMate/logger v0.1.0
 	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/uuid v1.6.0
@@ -21,5 +22,6 @@ require (
 
 replace (
 	github.com/BigMoneyBigSuccess/cineMate/clients => ../clients
+	github.com/BigMoneyBigSuccess/cineMate/logger => ../logger
 	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
 )

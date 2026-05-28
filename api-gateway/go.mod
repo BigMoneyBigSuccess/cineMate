@@ -4,6 +4,7 @@ go 1.26.1
 
 require (
 	github.com/BigMoneyBigSuccess/cineMate/clients v0.1.0
+	github.com/BigMoneyBigSuccess/cineMate/logger v0.1.0
 	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	google.golang.org/grpc v1.79.3
 	gopkg.in/yaml.v3 v3.0.1
@@ -20,5 +21,6 @@ require (
 
 replace (
 	github.com/BigMoneyBigSuccess/cineMate/clients => ../clients
+	github.com/BigMoneyBigSuccess/cineMate/logger => ../logger
 	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
 )

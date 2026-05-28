@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -17,10 +16,11 @@ import (
 	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/config"
 	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 )
 
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	log := logger.New("analytics-service")
 
 	cfg, err := config.Load(os.Getenv("ANALYTICS_CONFIG_PATH"))
 	if err != nil {

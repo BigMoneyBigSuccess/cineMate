@@ -5,6 +5,7 @@ import (
 
 	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/domain"
 	"github.com/BigMoneyBigSucces/cineMate/analytics-service/internal/core/ports"
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 
 	"github.com/google/uuid"
 )
@@ -27,14 +28,26 @@ func (uc *FeedbackUseCase) UpsertFeedback(ctx context.Context, feedback domain.M
 	if feedback.FeedbackID == uuid.Nil {
 		feedback.FeedbackID = uuid.New()
 	}
-	return uc.feedbackRepo.UpsertFeedback(ctx, feedback)
+	if err := uc.feedbackRepo.UpsertFeedback(ctx, feedback); err != nil {
+		return err
+	}
+	logger.FromContext(ctx).Info("feedback upserted",
+		"feedback_id", feedback.FeedbackID,
+		"user_id", feedback.UserID,
+		"movie_id", feedback.MovieID,
+	)
+	return nil
 }
 
 func (uc *FeedbackUseCase) RemoveFeedback(ctx context.Context, feedbackID uuid.UUID) error {
 	if feedbackID == uuid.Nil {
 		return domain.ErrInvalidMovieFeedback
 	}
-	return uc.feedbackRepo.RemoveFeedback(ctx, feedbackID)
+	if err := uc.feedbackRepo.RemoveFeedback(ctx, feedbackID); err != nil {
+		return err
+	}
+	logger.FromContext(ctx).Info("feedback removed", "feedback_id", feedbackID)
+	return nil
 }
 
 func (uc *FeedbackUseCase) GetFeedback(ctx context.Context, feedbackID uuid.UUID) (domain.MovieFeedback, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/movie-service/movieservicev1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,7 +19,10 @@ type MovieClient struct {
 
 func NewMovieClient(host string, port int) (*MovieClient, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(logger.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to movies service at %s: %w", addr, err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/auth/authv1"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -17,7 +18,10 @@ type AuthClient struct {
 
 func NewAuthClient(host string, port int) (*AuthClient, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(logger.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to auth service at %s: %w", addr, err)
 	}

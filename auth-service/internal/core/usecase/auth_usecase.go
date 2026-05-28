@@ -8,6 +8,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/core/ports"
 	"github.com/BigMoneyBigSuccess/cineMate/auth-service/internal/utils"
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/google/uuid"
 )
 
@@ -43,6 +44,7 @@ func (uc *AuthUseCase) Register(ctx context.Context, email, password string) (uu
 		return uuid.Nil, fmt.Errorf("create social profile: %w", err)
 	}
 
+	logger.FromContext(ctx).Info("user registered", "user_id", id, "username", username)
 	return id, nil
 }
 
@@ -60,7 +62,12 @@ func (uc *AuthUseCase) Login(ctx context.Context, email, password string) (strin
 		return "", domain.ErrInvalidCredentials
 	}
 
-	return utils.GenerateJWT(user.ID.String())
+	token, err := utils.GenerateJWT(user.ID.String())
+	if err != nil {
+		return "", err
+	}
+	logger.FromContext(ctx).Info("user logged in", "user_id", user.ID)
+	return token, nil
 }
 
 func (uc *AuthUseCase) ValidateToken(ctx context.Context, token string) (uuid.UUID, error) {

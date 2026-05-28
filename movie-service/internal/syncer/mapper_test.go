@@ -108,7 +108,7 @@ func newFilmItem(kinopoiskID int, nameRu string) FilmItem {
 	}
 }
 
-func TestMapFilmToMovieUsesOriginalNameWhenSet(t *testing.T) {
+func TestMapFilmToMovieUsesRussianNameWhenSet(t *testing.T) {
 	t.Parallel()
 
 	original := "Stalker"
@@ -117,35 +117,22 @@ func TestMapFilmToMovieUsesOriginalNameWhenSet(t *testing.T) {
 
 	movie := mapFilmToMovie(item, nil, []StaffMember{})
 
+	if movie.Title != "Сталкер" {
+		t.Errorf("Title = %q, want Russian %q (preferred over original)", movie.Title, "Сталкер")
+	}
+}
+
+func TestMapFilmToMovieFallsBackToOriginalWhenRussianEmpty(t *testing.T) {
+	t.Parallel()
+
+	original := "Stalker"
+	item := newFilmItem(12345, "")
+	item.NameOriginal = &original
+
+	movie := mapFilmToMovie(item, nil, []StaffMember{})
+
 	if movie.Title != "Stalker" {
-		t.Errorf("Title = %q, want %q", movie.Title, "Stalker")
-	}
-}
-
-func TestMapFilmToMovieFallsBackToRussianTitle(t *testing.T) {
-	t.Parallel()
-
-	item := newFilmItem(12345, "Сталкер")
-	item.NameOriginal = nil
-
-	movie := mapFilmToMovie(item, nil, []StaffMember{})
-
-	if movie.Title != "Сталкер" {
-		t.Errorf("Title = %q, want %q", movie.Title, "Сталкер")
-	}
-}
-
-func TestMapFilmToMovieIgnoresEmptyOriginalName(t *testing.T) {
-	t.Parallel()
-
-	empty := "  "
-	item := newFilmItem(12345, "Сталкер")
-	item.NameOriginal = &empty
-
-	movie := mapFilmToMovie(item, nil, []StaffMember{})
-
-	if movie.Title != "Сталкер" {
-		t.Errorf("Title = %q, want Russian title when OriginalName is whitespace", movie.Title)
+		t.Errorf("Title = %q, want %q (fallback when NameRu is empty)", movie.Title, "Stalker")
 	}
 }
 
