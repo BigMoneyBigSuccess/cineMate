@@ -185,6 +185,17 @@ services:
     networks:
       - cinemate
 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - cinemate
+
 volumes:
   postgres_data:
 
