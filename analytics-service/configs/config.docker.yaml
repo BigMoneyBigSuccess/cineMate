@@ -1,5 +1,5 @@
 grpc:
-  addr: ":8081"
+  addr: ":50054"
 
 postgres:
   url: ""  # overridden by ANALYTICS_DATABASE_URL

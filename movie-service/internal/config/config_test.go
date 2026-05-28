@@ -7,7 +7,7 @@ import (
 
 func validConfig() Config {
 	return Config{
-		GRPC:     GRPCConfig{Addr: ":8080"},
+		GRPC:     GRPCConfig{Addr: ":50052"},
 		Postgres: PostgresConfig{URL: "postgres://user:pass@localhost:5432/movies?sslmode=disable"},
 		Redis:    RedisConfig{Addr: "localhost:6379", DB: 0},
 		Cache: CacheConfig{

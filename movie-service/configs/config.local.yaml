@@ -1,5 +1,5 @@
 grpc:
-  addr: ":8080"
+  addr: ":50052"
 
 postgres:
   url: ""  # set MOVIE_SERVICE_DATABASE_URL or fill with your local credentials
