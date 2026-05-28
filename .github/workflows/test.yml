@@ -49,19 +49,19 @@ jobs:
         service:
           - name: api-gateway
             context: ./backend
-            dockerfile: ./api-gateway/Dockerfile
+            dockerfile: ./backend/api-gateway/Dockerfile
             tag: cinemate-api-gateway
           - name: auth-service
             context: ./backend
-            dockerfile: ./auth-service/Dockerfile
+            dockerfile: ./backend/auth-service/Dockerfile
             tag: cinemate-auth-service
           - name: movie-service
             context: ./backend
-            dockerfile: ./movie-service/Dockerfile
+            dockerfile: ./backend/movie-service/Dockerfile
             tag: cinemate-movie-service
           - name: social-service
             context: ./backend
-            dockerfile: ./social-service/Dockerfile
+            dockerfile: ./backend/social-service/Dockerfile
             tag: cinemate-social-service
 
     steps:
