@@ -2,7 +2,7 @@ package syncer
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
@@ -19,14 +19,19 @@ type movieUpserter interface {
 type Syncer struct {
 	client       *Client
 	movies       movieUpserter
+	log          *slog.Logger
 	fetchDesc    bool
 	retryBackoff time.Duration
 }
 
-func New(client *Client, movies movieUpserter, fetchDesc bool) *Syncer {
+func New(client *Client, movies movieUpserter, log *slog.Logger, fetchDesc bool) *Syncer {
+	if log == nil {
+		log = slog.Default()
+	}
 	return &Syncer{
 		client:       client,
 		movies:       movies,
+		log:          log.With("component", "syncer"),
 		fetchDesc:    fetchDesc,
 		retryBackoff: 5 * time.Minute,
 	}
@@ -38,33 +43,37 @@ func (s *Syncer) Start(ctx context.Context) {
 }
 
 func (s *Syncer) run(ctx context.Context) {
-	log.Print("syncer: started")
+	s.log.Info("syncer started")
 	page := 1
 
 	for {
 		if ctx.Err() != nil {
-			log.Print("syncer: stopped")
+			s.log.Info("syncer stopped")
 			return
 		}
 
 		totalPages, err := s.syncPage(ctx, page)
 		if err != nil {
 			if ctx.Err() != nil {
-				log.Print("syncer: stopped")
+				s.log.Info("syncer stopped")
 				return
 			}
-			log.Printf("syncer: page %d error: %v — retrying in %s", page, err, s.retryBackoff)
+			s.log.Error("syncer page error, retrying",
+				"page", page,
+				"error", err,
+				"backoff", s.retryBackoff.String(),
+			)
 			select {
 			case <-time.After(s.retryBackoff):
 			case <-ctx.Done():
-				log.Print("syncer: stopped")
+				s.log.Info("syncer stopped")
 				return
 			}
 			continue
 		}
 
 		if page >= totalPages {
-			log.Printf("syncer: finished cycle at page %d/%d, restarting", page, totalPages)
+			s.log.Info("syncer cycle finished, restarting", "page", page, "total_pages", totalPages)
 			page = 1
 		} else {
 			page++
@@ -75,7 +84,7 @@ func (s *Syncer) run(ctx context.Context) {
 // syncPage fetches one page of films and upserts each one. Returns totalPages
 // so the caller knows when to wrap around.
 func (s *Syncer) syncPage(ctx context.Context, page int) (int, error) {
-	log.Printf("syncer: fetching page %d", page)
+	s.log.Debug("syncer fetching page", "page", page)
 
 	filmsPage, err := s.client.GetFilmsPage(ctx, page)
 	if err != nil {
@@ -85,15 +94,26 @@ func (s *Syncer) syncPage(ctx context.Context, page int) (int, error) {
 		return 1, nil
 	}
 
-	log.Printf("syncer: page %d — %d films, %d total pages", page, len(filmsPage.Items), filmsPage.TotalPages)
+	s.log.Info("syncer page fetched",
+		"page", page,
+		"films", len(filmsPage.Items),
+		"total_pages", filmsPage.TotalPages,
+	)
 
 	for i, item := range filmsPage.Items {
 		if ctx.Err() != nil {
 			return filmsPage.TotalPages, ctx.Err()
 		}
-		log.Printf("syncer: processing film %d/%d — %s (id=%d)", i+1, len(filmsPage.Items), item.NameRu, item.KinopoiskID)
+		s.log.Debug("syncer processing film",
+			"index", i+1, "of", len(filmsPage.Items),
+			"title", item.NameRu, "kinopoisk_id", item.KinopoiskID,
+		)
 		if err := s.syncFilm(ctx, item); err != nil {
-			log.Printf("syncer: skip film %d (%s): %v", item.KinopoiskID, item.NameRu, err)
+			s.log.Warn("syncer skipped film",
+				"kinopoisk_id", item.KinopoiskID,
+				"title", item.NameRu,
+				"error", err,
+			)
 		}
 	}
 
@@ -125,6 +145,6 @@ func (s *Syncer) syncFilm(ctx context.Context, item FilmItem) error {
 		return err
 	}
 
-	log.Printf("syncer: upserted %d — %s", item.KinopoiskID, movie.Title)
+	s.log.Info("syncer upserted movie", "kinopoisk_id", item.KinopoiskID, "title", movie.Title)
 	return nil
 }

@@ -5,13 +5,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	grpcadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/grpc"
 	postgresadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/postgres"
 	redisadapter "github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/adapters/redis"
@@ -26,29 +27,34 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
+	log := logger.New("movie-service")
+	slog.SetDefault(log)
+
+	if err := run(log); err != nil {
+		log.Error("movie-service exited with error", "error", err)
+		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(log *slog.Logger) error {
 	cfg, err := appconfig.Load(resolveConfigPath())
 	if err != nil {
-		return err
+		return fmt.Errorf("load config: %w", err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	log.Printf("Loaded config: %s", cfg)
+	log.Info("config loaded", "summary", cfg.String())
 
 	pool, err := postgresadapter.NewPool(ctx, cfg.Postgres)
 	if err != nil {
 		return err
 	}
 	defer pool.Close()
+	log.Info("postgres connected")
 
-	redisClient, err := openRedis(ctx, cfg.Redis)
+	redisClient, err := openRedis(ctx, log, cfg.Redis)
 	if err != nil {
 		return err
 	}
@@ -67,9 +73,11 @@ func run() error {
 	if cfg.Syncer.Enabled {
 		client := syncer.NewClient(cfg.Syncer.BaseURL, cfg.Syncer.APIKey, cfg.Syncer.DailyRequestBudget)
 		defer client.Stop()
-		syncer.New(client, movieUseCase, cfg.Syncer.FetchDescription).Start(ctx)
-		log.Printf("syncer: enabled (budget=%d req/day, fetch_description=%v)",
-			cfg.Syncer.DailyRequestBudget, cfg.Syncer.FetchDescription)
+		syncer.New(client, movieUseCase, log, cfg.Syncer.FetchDescription).Start(ctx)
+		log.Info("syncer enabled",
+			"budget_req_per_day", cfg.Syncer.DailyRequestBudget,
+			"fetch_description", cfg.Syncer.FetchDescription,
+		)
 	}
 
 	watchlistRepo := postgresadapter.NewWatchlistRepository(pool)
@@ -79,7 +87,7 @@ func run() error {
 		usecase.NewWatchlistUseCase(watchlistRepo),
 	)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(logger.UnaryServerInterceptor(log)))
 	movieservicev1.RegisterMovieServiceServer(grpcServer, handler)
 	movieservicev1.RegisterMovieAdminServiceServer(grpcServer, handler)
 	movieservicev1.RegisterWatchlistServiceServer(grpcServer, handler)
@@ -93,20 +101,22 @@ func run() error {
 
 	go func() {
 		<-ctx.Done()
+		log.Info("shutdown signal received")
 		shutdownGRPCServer(grpcServer, cfg.ShutdownTimeout)
 	}()
 
-	log.Printf("gRPC server listening on %s", cfg.GRPC.Addr)
+	log.Info("movie gRPC server listening", "addr", cfg.GRPC.Addr)
 	if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 		return fmt.Errorf("serve grpc: %w", err)
 	}
 
+	log.Info("movie service stopped")
 	return nil
 }
 
-func openRedis(ctx context.Context, cfg appconfig.RedisConfig) (*redis.Client, error) {
+func openRedis(ctx context.Context, log *slog.Logger, cfg appconfig.RedisConfig) (*redis.Client, error) {
 	if cfg.Addr == "" {
-		log.Print("Redis is not configured, movie cache is disabled")
+		log.Info("redis disabled, movie cache off")
 		return nil, nil
 	}
 

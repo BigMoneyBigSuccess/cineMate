@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -18,6 +18,7 @@ import (
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/config"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/usecase"
 	"github.com/BigMoneyBigSuccess/cineMate/clients"
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/BigMoneyBigSuccess/cineMate/proto/social/socialv1"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -25,15 +26,19 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
-		log.Fatal(err)
+	log := logger.New("social-service")
+	slog.SetDefault(log)
+
+	if err := run(log); err != nil {
+		log.Error("social-service exited with error", "error", err)
+		os.Exit(1)
 	}
 }
 
-func run() error {
+func run(log *slog.Logger) error {
 	cfg, err := config.Load(resolveConfigPath())
 	if err != nil {
-		return err
+		return fmt.Errorf("load config: %w", err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -44,12 +49,14 @@ func run() error {
 		return err
 	}
 	defer db.Close()
+	log.Info("postgres connected")
 
 	authClient, err := clients.NewAuthClient(cfg.Auth.Host, cfg.Auth.Port)
 	if err != nil {
 		return fmt.Errorf("init auth client: %w", err)
 	}
 	defer authClient.Close()
+	log.Info("auth client connected", "host", cfg.Auth.Host, "port", cfg.Auth.Port)
 
 	uc := usecase.NewSocialUseCase(
 		postgres.NewProfileRepository(db),
@@ -58,7 +65,10 @@ func run() error {
 
 	handler := grpcadapter.NewSocialHandler(uc)
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(grpcadapter.AuthUnaryInterceptor(authClient)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		logger.UnaryServerInterceptor(log),
+		grpcadapter.AuthUnaryInterceptor(authClient),
+	))
 	socialv1.RegisterSocialServiceServer(grpcServer, handler)
 	reflection.Register(grpcServer)
 
@@ -70,14 +80,16 @@ func run() error {
 
 	go func() {
 		<-ctx.Done()
+		log.Info("shutdown signal received")
 		shutdownGRPCServer(grpcServer, cfg.ShutdownTimeout)
 	}()
 
-	log.Printf("social service gRPC listening on %s", cfg.GRPC.Addr)
+	log.Info("social gRPC server listening", "addr", cfg.GRPC.Addr)
 	if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
 		return fmt.Errorf("serve grpc: %w", err)
 	}
 
+	log.Info("social service stopped")
 	return nil
 }
 

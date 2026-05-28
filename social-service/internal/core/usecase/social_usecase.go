@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/social-service/internal/core/ports"
 	"github.com/google/uuid"
@@ -29,11 +30,19 @@ func (uc *SocialUseCase) UpdateProfile(ctx context.Context, profile domain.UserP
 }
 
 func (uc *SocialUseCase) FollowUser(ctx context.Context, followerID, followedID uuid.UUID) error {
-	return uc.follows.Follow(ctx, followerID, followedID)
+	if err := uc.follows.Follow(ctx, followerID, followedID); err != nil {
+		return err
+	}
+	logger.FromContext(ctx).Info("follow created", "follower_id", followerID, "followed_id", followedID)
+	return nil
 }
 
 func (uc *SocialUseCase) UnfollowUser(ctx context.Context, followerID, followedID uuid.UUID) error {
-	return uc.follows.Unfollow(ctx, followerID, followedID)
+	if err := uc.follows.Unfollow(ctx, followerID, followedID); err != nil {
+		return err
+	}
+	logger.FromContext(ctx).Info("follow removed", "follower_id", followerID, "followed_id", followedID)
+	return nil
 }
 
 func (uc *SocialUseCase) GetFollowers(ctx context.Context, userID uuid.UUID, limit, offset int32) ([]uuid.UUID, int32, error) {

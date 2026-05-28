@@ -3,6 +3,7 @@ module github.com/BigMoneyBigSuccess/cineMate/movie-service
 go 1.26.1
 
 require (
+	github.com/BigMoneyBigSuccess/cineMate/logger v0.1.0
 	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.9.2
@@ -12,7 +13,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
+replace (
+	github.com/BigMoneyBigSuccess/cineMate/logger => ../logger
+	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
+)
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

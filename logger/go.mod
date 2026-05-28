@@ -1,17 +1,10 @@
-module github.com/BigMoneyBigSuccess/cineMate/clients
+module github.com/BigMoneyBigSuccess/cineMate/logger
 
 go 1.26.1
 
 require (
-	github.com/BigMoneyBigSuccess/cineMate/logger v0.1.0
-	github.com/BigMoneyBigSuccess/cineMate/proto v0.1.0
 	github.com/google/uuid v1.6.0
 	google.golang.org/grpc v1.79.3
-)
-
-replace (
-	github.com/BigMoneyBigSuccess/cineMate/logger => ../logger
-	github.com/BigMoneyBigSuccess/cineMate/proto => ../proto
 )
 
 require (

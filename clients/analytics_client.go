@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/BigMoneyBigSuccess/cineMate/logger"
 	analyticsv1 "github.com/BigMoneyBigSuccess/cineMate/proto/analytics-service/analyticsservicev1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +18,10 @@ type AnalyticsClient struct {
 
 func NewAnalyticsClient(host string, port int) (*AnalyticsClient, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(addr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(logger.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to analytics service at %s: %w", addr, err)
 	}
