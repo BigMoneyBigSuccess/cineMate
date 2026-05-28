@@ -14,5 +14,6 @@ social:
   host: "localhost"
   port: 50053
 
-jwt:
-  secret_file: "./jwt_secret.key"
+analytics:
+  host: "localhost"
+  port: 50054

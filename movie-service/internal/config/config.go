@@ -47,7 +47,7 @@ type CacheConfig struct {
 func Default() Config {
 	return Config{
 		GRPC: GRPCConfig{
-			Addr: ":8080",
+			Addr: ":50052",
 		},
 		Cache: CacheConfig{
 			MovieTTL:     30 * time.Minute,

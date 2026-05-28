@@ -1,11 +1,11 @@
 grpc:
-  addr: ":8081"
+  addr: ":50054"
 
 postgres:
   url: "postgres://analytics:analytics@localhost:5432/analytics?sslmode=disable"
 
 movie_collection:
-  addr: "localhost:8080"
+  addr: "localhost:50052"
   timeout: 3s
 
 recommendation:

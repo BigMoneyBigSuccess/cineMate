@@ -13,3 +13,7 @@ movies:
 social:
   host: "social-service"
   port: 50053
+
+analytics:
+  host: "analytics-service"
+  port: 50054

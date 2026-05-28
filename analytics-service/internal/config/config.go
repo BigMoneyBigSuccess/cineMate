@@ -44,10 +44,10 @@ type OpenRouterConfig struct {
 func Default() Config {
 	return Config{
 		GRPC: GRPCConfig{
-			Addr: ":8081",
+			Addr: ":50054",
 		},
 		MovieCollection: MovieCatalogConfig{
-			Addr:    "localhost:8080",
+			Addr:    "localhost:50052",
 			Timeout: 3 * time.Second,
 		},
 		Recommendation: RecommendationConfig{

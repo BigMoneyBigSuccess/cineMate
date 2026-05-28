@@ -17,6 +17,6 @@ COPY movie-service/configs/config.docker.yaml /app/configs/config.docker.yaml
 
 ENV MOVIE_SERVICE_CONFIG_PATH=/app/configs/config.docker.yaml
 
-EXPOSE 8080
+EXPOSE 50052
 
 CMD ["/app/movie_service"]

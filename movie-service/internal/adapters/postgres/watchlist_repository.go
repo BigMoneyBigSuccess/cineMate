@@ -2,12 +2,14 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/domain"
 	"github.com/BigMoneyBigSuccess/cineMate/movie-service/internal/core/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,6 +30,10 @@ func (r *WatchlistRepository) AddMovie(ctx context.Context, userID, movieID uuid
 		ON CONFLICT DO NOTHING`
 
 	if _, err := r.db.Exec(ctx, q, userID, movieID); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return domain.ErrMovieNotFound
+		}
 		return fmt.Errorf("add movie to watchlist: %w", err)
 	}
 	return nil

@@ -48,11 +48,19 @@ func run() error {
 	}
 	defer socialClient.Close()
 
-	
+	analyticsClient, err := clients.NewAnalyticsClient(cfg.Analytics.Host, cfg.Analytics.Port)
+	if err != nil {
+		return fmt.Errorf("init analytics client: %w", err)
+	}
+	defer analyticsClient.Close()
+
+
 	authHandler := httpadapter.NewAuthHandler(authClient)
 	movieHandler := httpadapter.NewMovieHandler(movieClient)
 	movieAdminHandler := httpadapter.NewMovieAdminHandler(movieClient)
 	socialHandler := httpadapter.NewSocialHandler(socialClient)
+	reviewHandler := httpadapter.NewReviewHandler(analyticsClient)
+	recommendationsHandler := httpadapter.NewRecommendationsHandler(analyticsClient)
 
 	
 	mux := http.NewServeMux()
@@ -67,8 +75,48 @@ func run() error {
 
 	
 	mux.HandleFunc("/api/v1/movies", movieHandler.ListMovies)
-	
-	mux.HandleFunc("/api/v1/movies/", movieHandler.GetMovieByID)
+
+	// /api/v1/movies/{id}              → GetMovieByID (public)
+	// /api/v1/movies/{id}/reviews POST → UpsertReview (auth required)
+	reviewUpsertProtected := authMiddleware(http.HandlerFunc(reviewHandler.UpsertReview))
+	mux.HandleFunc("/api/v1/movies/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/reviews") {
+			reviewUpsertProtected.ServeHTTP(w, r)
+			return
+		}
+		movieHandler.GetMovieByID(w, r)
+	})
+
+	// /api/v1/reviews/{feedbackId}     → GET (public), DELETE (auth required)
+	reviewDeleteProtected := authMiddleware(http.HandlerFunc(reviewHandler.DeleteReview))
+	mux.HandleFunc("/api/v1/reviews/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			reviewHandler.GetReview(w, r)
+		case http.MethodDelete:
+			reviewDeleteProtected.ServeHTTP(w, r)
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Recommendations — all routes require auth, all operate on the JWT user.
+	mux.Handle("/api/v1/recommendations", authMiddleware(http.HandlerFunc(recommendationsHandler.GenerateForCurrentUser)))
+	mux.Handle("/api/v1/recommendations/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		switch {
+		case path == "/api/v1/recommendations/history":
+			if r.Method == http.MethodDelete {
+				recommendationsHandler.ResetHistoryForCurrentUser(w, r)
+			} else {
+				recommendationsHandler.HistoryForCurrentUser(w, r)
+			}
+		case strings.HasSuffix(path, "/interactions"):
+			recommendationsHandler.MarkInteraction(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})))
 
 	
 	mux.Handle("/api/v1/watchlist", authMiddleware(http.HandlerFunc(movieHandler.GetWatchlist)))
@@ -107,6 +155,8 @@ func run() error {
 			socialHandler.GetFollowing(w, r)
 		case strings.HasSuffix(path, "/watchlist"):
 			movieHandler.GetUserWatchlistByID(w, r)
+		case strings.HasSuffix(path, "/reviews"):
+			reviewHandler.ListUserReviews(w, r)
 		case strings.HasSuffix(path, "/is-following"):
 			socialHandler.IsFollowing(w, r)
 		default:

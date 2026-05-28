@@ -21,7 +21,8 @@ func mapError(err error) error {
 		return status.Error(codes.Canceled, context.Canceled.Error())
 	case errors.Is(err, context.DeadlineExceeded):
 		return status.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error())
-	case errors.Is(err, pgx.ErrNoRows):
+	case errors.Is(err, pgx.ErrNoRows),
+		errors.Is(err, domain.ErrMovieNotFound):
 		return status.Error(codes.NotFound, "movie not found")
 	case errors.Is(err, domain.ErrInvalidMovie),
 		errors.Is(err, domain.ErrInvalidGenre),
