@@ -34,7 +34,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/authdb?sslmode=disable"
       - "up"
     volumes:
-      - ./auth-service/migrations:/migrations:ro
+      - ./backend/auth-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +49,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/moviedb?sslmode=disable"
       - "up"
     volumes:
-      - ./movie-service/migrations:/migrations:ro
+      - ./backend/movie-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/socialdb?sslmode=disable"
       - "up"
     volumes:
-      - ./social-service/migrations:/migrations:ro
+      - ./backend/social-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/analyticsdb?sslmode=disable"
       - "up"
     volumes:
-      - ./analytics-service/migrations:/migrations:ro
+      - ./backend/analytics-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,7 +89,7 @@ services:
 
   auth-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: auth-service/Dockerfile
     environment:
       AUTH_CONFIG_PATH: /configs/config.docker.yaml
@@ -104,7 +104,7 @@ services:
 
   movie-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: movie-service/Dockerfile
     environment:
       MOVIE_SERVICE_CONFIG_PATH: /app/configs/config.docker.yaml
@@ -139,7 +139,7 @@ services:
 
   social-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: social-service/Dockerfile
     environment:
       SOCIAL_CONFIG_PATH: /configs/config.docker.yaml
@@ -155,7 +155,7 @@ services:
 
   analytics-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: analytics-service/Dockerfile
     environment:
       ANALYTICS_CONFIG_PATH: /configs/config.docker.yaml
@@ -173,7 +173,7 @@ services:
 
   api-gateway:
     build:
-      context: .
+      context: ./backend
       dockerfile: api-gateway/Dockerfile
     environment:
       LOG_LEVEL: ${LOG_LEVEL:-info}
