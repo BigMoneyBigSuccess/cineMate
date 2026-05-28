@@ -2,13 +2,8 @@ FROM golang:1.26-alpine AS builder
 
 WORKDIR /build
 
-COPY proto/go.mod proto/go.sum proto/
-COPY clients/go.mod clients/go.sum clients/
-COPY analytics-service/go.mod analytics-service/go.sum analytics-service/
-
-RUN cd analytics-service && go mod download
-
 COPY proto/ proto/
+COPY logger/ logger/
 COPY clients/ clients/
 COPY analytics-service/ analytics-service/
 

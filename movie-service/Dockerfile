@@ -2,12 +2,8 @@ FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
-COPY proto/go.mod proto/go.sum proto/
-COPY movie-service/go.mod movie-service/go.sum movie-service/
-
-RUN cd movie-service && go mod download
-
 COPY proto/ proto/
+COPY logger/ logger/
 COPY movie-service/ movie-service/
 
 RUN cd movie-service && CGO_ENABLED=0 GOOS=linux go build \
