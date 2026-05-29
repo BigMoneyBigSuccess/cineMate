@@ -6,27 +6,27 @@ import (
 
 // ── parsePerson ───────────────────────────────────────────────────────────────
 
-func TestParsePersonPrefersEnglishName(t *testing.T) {
+func TestParsePersonPrefersRussianName(t *testing.T) {
 	t.Parallel()
 
 	person, ok := parsePerson(StaffMember{NameEn: "Tom Hanks", NameRu: "Том Хэнкс"})
 	if !ok {
 		t.Fatal("expected ok=true")
 	}
-	if person.Name != "Tom" || person.Surname != "Hanks" {
-		t.Errorf("Name=%q Surname=%q, want Tom Hanks", person.Name, person.Surname)
+	if person.Name != "Том" || person.Surname != "Хэнкс" {
+		t.Errorf("Name=%q Surname=%q, want Том Хэнкс", person.Name, person.Surname)
 	}
 }
 
-func TestParsePersonFallsBackToRussianName(t *testing.T) {
+func TestParsePersonFallsBackToEnglishName(t *testing.T) {
 	t.Parallel()
 
-	person, ok := parsePerson(StaffMember{NameEn: "", NameRu: "Андрей Тарковский"})
+	person, ok := parsePerson(StaffMember{NameEn: "Andrey Tarkovskiy", NameRu: "Андрей Тарковский"})
 	if !ok {
 		t.Fatal("expected ok=true")
 	}
-	if person.Name != "Андрей" || person.Surname != "Тарковский" {
-		t.Errorf("Name=%q Surname=%q, want Андрей Тарковский", person.Name, person.Surname)
+	if person.Name != "Andrey" || person.Surname != "Tarkovskiy" {
+		t.Errorf("Name=%q Surname=%q, want Andrey Tarkovskiy", person.Name, person.Surname)
 	}
 }
 
