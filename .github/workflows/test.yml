@@ -48,20 +48,20 @@ jobs:
       matrix:
         service:
           - name: api-gateway
-            context: .
-            dockerfile: ./api-gateway/Dockerfile
+            context: ./backend
+            dockerfile: ./backend/api-gateway/Dockerfile
             tag: cinemate-api-gateway
           - name: auth-service
-            context: .
-            dockerfile: ./auth-service/Dockerfile
+            context: ./backend
+            dockerfile: ./backend/auth-service/Dockerfile
             tag: cinemate-auth-service
           - name: movie-service
-            context: .
-            dockerfile: ./movie-service/Dockerfile
+            context: ./backend
+            dockerfile: ./backend/movie-service/Dockerfile
             tag: cinemate-movie-service
           - name: social-service
-            context: .
-            dockerfile: ./social-service/Dockerfile
+            context: ./backend
+            dockerfile: ./backend/social-service/Dockerfile
             tag: cinemate-social-service
 
     steps:

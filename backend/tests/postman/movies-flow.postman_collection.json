@@ -1,0 +1,656 @@
+{
+  "info": {
+    "_postman_id": "a0200000-0002-4002-8002-000000000001",
+    "name": "cineMate — Movies & Watchlist Flow",
+    "description": "End-to-end test of the movie catalogue and watchlist features.\n\nRun order:\n1. Auth         — Register + Login (saves {{token}} and {{userId}})\n2. Admin Seed   — Upsert a deterministic test movie (idempotent)\n3. Browse       — List all movies; search, filter by year and IMDB rating; get by ID\n4. Watchlist    — Add movie, fetch my watchlist, fetch a user's public watchlist, remove\n5. Admin Lifecycle — Archive then permanently delete the test movie",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:8080", "type": "default" },
+    { "key": "token",        "value": "", "type": "default" },
+    { "key": "userId",       "value": "", "type": "default" },
+    { "key": "testMovieId",  "value": "e1100000-0000-0000-0000-000000000001", "type": "default" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "id": "a0200001-0002-4002-8002-000000000001",
+      "item": [
+        {
+          "name": "Register",
+          "id": "a0200002-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200002-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('userId', json.user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"movies-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "id": "a0200003-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200003-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('userId', payload.user_id);",
+                  "console.log('userId from JWT:', payload.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"movies-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Admin — Seed Test Movie",
+      "id": "a0200004-0002-4002-8002-000000000001",
+      "description": "Creates a deterministic test movie with a fixed UUID so all subsequent requests use a known ID. Safe to re-run (upsert is idempotent).",
+      "item": [
+        {
+          "name": "Upsert Test Movie",
+          "id": "a0200005-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200005-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Test movie seeded with ID:', pm.collectionVariables.get('testMovieId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"e1100000-0000-0000-0000-000000000001\",\n  \"title\": \"Cascade Protocol\",\n  \"description\": \"A software engineer uncovers a government backdoor that makes every connected device a potential weapon.\",\n  \"genres\": [\n    { \"id\": \"e2200000-0000-0000-0000-000000000001\", \"name\": \"Thriller\" },\n    { \"id\": \"e2200000-0000-0000-0000-000000000002\", \"name\": \"Sci-Fi\" }\n  ],\n  \"actors\": [\n    { \"id\": \"e3300000-0000-0000-0000-000000000001\", \"name\": \"Dana\", \"surname\": \"Rivers\", \"birth_year\": 1988 },\n    { \"id\": \"e3300000-0000-0000-0000-000000000002\", \"name\": \"Marco\", \"surname\": \"Vitale\", \"birth_year\": 1982 }\n  ],\n  \"directors\": [\n    { \"id\": \"e4400000-0000-0000-0000-000000000001\", \"name\": \"Sandra\", \"surname\": \"Lee\", \"birth_year\": 1972 }\n  ],\n  \"country\": \"Canada\",\n  \"release_year\": 2024,\n  \"imdb_rating\": 7.9\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "movies"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Browse Movies",
+      "id": "a0200006-0002-4002-8002-000000000001",
+      "item": [
+        {
+          "name": "List All Movies",
+          "id": "a0200007-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200007-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json).to.have.property('movies').that.is.an('array'));",
+                  "pm.test('Returns total count', () => pm.expect(json).to.have.property('total'));",
+                  "console.log('Total movies:', json.total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?limit=50&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "limit", "value": "50" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search by Title Query",
+          "id": "a0200008-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200008-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json.movies).to.be.an('array'));",
+                  "console.log('Search results for \"Cascade\":', json.movies.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?q=Cascade&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "q", "value": "Cascade" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Year Range",
+          "id": "a0200009-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200009-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('All movies within year range', () => {",
+                  "  (json.movies || []).forEach(m => {",
+                  "    pm.expect(m.release_year).to.be.at.least(2020);",
+                  "    pm.expect(m.release_year).to.be.at.most(2025);",
+                  "  });",
+                  "});",
+                  "console.log('Movies (2020-2025):', json.movies.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?release_year_from=2020&release_year_to=2025&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "release_year_from", "value": "2020" },
+                { "key": "release_year_to", "value": "2025" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by IMDB Rating",
+          "id": "a0200010-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200010-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('All movies meet rating floor', () => {",
+                  "  (json.movies || []).forEach(m => pm.expect(m.imdb_rating).to.be.at.least(7.5));",
+                  "});",
+                  "console.log('Movies with IMDB >= 7.5:', json.movies.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?imdb_rating_from=7.5&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "imdb_rating_from", "value": "7.5" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sort by IMDB Rating Descending",
+          "id": "a0200010-0002-4002-8002-000000000011",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200010-0002-4002-8002-000000000012",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Movies array present', () => pm.expect(json.movies).to.be.an('array'));",
+                  "const ratings = (json.movies || []).map(m => m.imdb_rating);",
+                  "console.log('Ratings (desc):', ratings.join(', '));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?sort_by=imdb_rating&sort_order=desc&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "sort_by", "value": "imdb_rating" },
+                { "key": "sort_order", "value": "desc" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Movie by ID  [Cascade Protocol]",
+          "id": "a0200011-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200011-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Correct title', () => pm.expect(json.title).to.eql('Cascade Protocol'));",
+                  "pm.test('Has genres', () => pm.expect(json.genres).to.be.an('array').with.length.at.least(1));",
+                  "const genres = (json.genres || []).map(g => g.name).join(', ');",
+                  "console.log('Cascade Protocol genres:', genres);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/{{testMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies", "{{testMovieId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Non-Existent Movie — expect 404",
+          "id": "a0200012-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200012-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found for unknown ID', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/00000000-dead-4ead-dead-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies", "00000000-dead-4ead-dead-000000000000"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Watchlist",
+      "id": "a0200013-0002-4002-8002-000000000001",
+      "item": [
+        {
+          "name": "Add Movie to My Watchlist",
+          "id": "a0200014-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200014-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "// 204 = added; 409 = already in watchlist (safe to re-run)",
+                  "pm.test('Movie added or already in watchlist', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([204, 409]);",
+                  "});",
+                  "console.log('Watchlist add status:', pm.response.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist/{{testMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist", "{{testMovieId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Watchlist",
+          "id": "a0200015-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200015-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json.movies).to.be.an('array'));",
+                  "const testId = pm.collectionVariables.get('testMovieId');",
+                  "const found = (json.movies || []).some(m => m.movie_id === testId);",
+                  "pm.test('Test movie is in watchlist', () => pm.expect(found).to.be.true);",
+                  "console.log('My watchlist count:', json.movies.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User's Public Watchlist",
+          "id": "a0200016-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200016-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK — public endpoint, no auth needed', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json.movies).to.be.an('array'));",
+                  "console.log('Public watchlist count:', json.movies.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "watchlist"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Movie from Watchlist",
+          "id": "a0200017-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200017-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Movie removed from watchlist.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist/{{testMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist", "{{testMovieId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Removed — movie must be gone from watchlist",
+          "id": "a0200018-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200018-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const testId = pm.collectionVariables.get('testMovieId');",
+                  "const found = (json.movies || []).some(m => m.movie_id === testId);",
+                  "pm.test('Test movie no longer in watchlist', () => pm.expect(found).to.be.false);",
+                  "console.log('Watchlist size after removal:', (json.movies || []).length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Admin — Movie Lifecycle",
+      "id": "a0200019-0002-4002-8002-000000000001",
+      "description": "Archive then permanently delete the test movie. Run this folder last — after deletion, browse requests for this movie will return 404.",
+      "item": [
+        {
+          "name": "Archive Movie",
+          "id": "a0200020-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200020-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Movie archived. It is hidden from public browse but still in DB.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies/{{testMovieId}}/archive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "movies", "{{testMovieId}}", "archive"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Movies with Archived Flag — movie must appear",
+          "id": "a0200021-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200021-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const testId = pm.collectionVariables.get('testMovieId');",
+                  "const found = (json.movies || []).some(m => m.movie_id === testId);",
+                  "pm.test('Archived movie visible with include_archived=1', () => pm.expect(found).to.be.true);",
+                  "console.log('Total (incl. archived):', json.total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?include_archived=1&limit=100",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies"],
+              "query": [
+                { "key": "include_archived", "value": "1" },
+                { "key": "limit", "value": "100" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Movie",
+          "id": "a0200022-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200022-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Movie permanently deleted.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies/{{testMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "movies", "{{testMovieId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Deleted — GET must now return 404",
+          "id": "a0200023-0002-4002-8002-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0200023-0002-4002-8002-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found after deletion', () => pm.response.to.have.status(404));",
+                  "console.log('Movie is correctly gone from the catalogue.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/{{testMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies", "{{testMovieId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

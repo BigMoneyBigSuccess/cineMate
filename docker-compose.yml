@@ -34,7 +34,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/authdb?sslmode=disable"
       - "up"
     volumes:
-      - ./auth-service/migrations:/migrations:ro
+      - ./backend/auth-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +49,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/moviedb?sslmode=disable"
       - "up"
     volumes:
-      - ./movie-service/migrations:/migrations:ro
+      - ./backend/movie-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +64,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/socialdb?sslmode=disable"
       - "up"
     volumes:
-      - ./social-service/migrations:/migrations:ro
+      - ./backend/social-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,7 +79,7 @@ services:
       - "-database=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/analyticsdb?sslmode=disable"
       - "up"
     volumes:
-      - ./analytics-service/migrations:/migrations:ro
+      - ./backend/analytics-service/migrations:/migrations:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,12 +89,13 @@ services:
 
   auth-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: auth-service/Dockerfile
     environment:
       AUTH_CONFIG_PATH: /configs/config.docker.yaml
       AUTH_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/authdb?sslmode=disable
       JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       auth-migrate:
         condition: service_completed_successfully
@@ -103,7 +104,7 @@ services:
 
   movie-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: movie-service/Dockerfile
     environment:
       MOVIE_SERVICE_CONFIG_PATH: /app/configs/config.docker.yaml
@@ -111,6 +112,7 @@ services:
       MOVIE_SERVICE_REDIS_ADDR: redis:6379
       MOVIE_SERVICE_SYNCER_ENABLED: ${MOVIE_SERVICE_SYNCER_ENABLED:-false}
       MOVIE_SERVICE_SYNCER_API_KEY: ${KINOPOISK_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       movie-migrate:
         condition: service_completed_successfully
@@ -137,11 +139,12 @@ services:
 
   social-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: social-service/Dockerfile
     environment:
       SOCIAL_CONFIG_PATH: /configs/config.docker.yaml
       SOCIAL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/socialdb?sslmode=disable
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       social-migrate:
         condition: service_completed_successfully
@@ -152,13 +155,14 @@ services:
 
   analytics-service:
     build:
-      context: .
+      context: ./backend
       dockerfile: analytics-service/Dockerfile
     environment:
       ANALYTICS_CONFIG_PATH: /configs/config.docker.yaml
       ANALYTICS_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/analyticsdb?sslmode=disable
       ANALYTICS_MOVIE_COLLECTION_ADDR: movie-service:50052
       ANALYTICS_OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     depends_on:
       analytics-migrate:
         condition: service_completed_successfully
@@ -169,8 +173,10 @@ services:
 
   api-gateway:
     build:
-      context: .
+      context: ./backend
       dockerfile: api-gateway/Dockerfile
+    environment:
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "8080:8080"
     depends_on:

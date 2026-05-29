@@ -1,0 +1,564 @@
+{
+  "info": {
+    "_postman_id": "a0300000-0003-4003-8003-000000000001",
+    "name": "cineMate — Social Flow",
+    "description": "End-to-end test of user profiles, the social graph, and user discovery.\n\nRun order:\n1. Setup        — Register and login two users: primary (the actor) and target (the subject to follow)\n2. Profiles     — Get profile, update bio/username, verify the update\n3. Social Graph — Follow target; verify is-following; inspect followers / following lists; unfollow; verify reverted\n4. Discovery    — Search users by username prefix",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",      "value": "http://localhost:8080", "type": "default" },
+    { "key": "token",        "value": "", "type": "default" },
+    { "key": "userId",       "value": "", "type": "default" },
+    { "key": "targetUserId", "value": "", "type": "default" }
+  ],
+  "item": [
+    {
+      "name": "1. Setup — Auth",
+      "id": "a0300001-0003-4003-8003-000000000001",
+      "description": "Creates two accounts. The primary user (social-primary@...) is the one executing the social actions. The target user (social-target@...) is the one who will be followed.",
+      "item": [
+        {
+          "name": "Register Primary User",
+          "id": "a0300002-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300002-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  console.log('Primary user created:', pm.response.json().user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"social-primary@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Target User",
+          "id": "a0300003-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300003-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  console.log('Target user created:', pm.response.json().user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"social-target@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Primary User",
+          "id": "a0300004-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300004-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('userId', payload.user_id);",
+                  "console.log('Primary userId:', payload.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"social-primary@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Target User — saves targetUserId",
+          "id": "a0300005-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300005-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "// Decode JWT to extract target user's ID (no need to store target's token)",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('targetUserId', payload.user_id);",
+                  "console.log('Target userId:', payload.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"social-target@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Profiles",
+      "id": "a0300006-0003-4003-8003-000000000001",
+      "item": [
+        {
+          "name": "Get Primary User Profile  (public)",
+          "id": "a0300007-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300007-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Profile has user_id field', () => pm.expect(json.user_id || json.userId || json.id).to.exist);",
+                  "console.log('Profile data:', JSON.stringify(json));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Primary User Profile",
+          "id": "a0300008-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300008-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Profile updated.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"social_primary_user\",\n  \"bio\": \"Testing the social features of cineMate.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Profile Update",
+          "id": "a0300009-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300009-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const username = json.username || json.Username || '';",
+                  "const bio = json.bio || json.Bio || '';",
+                  "pm.test('Username updated', () => pm.expect(username).to.eql('social_primary_user'));",
+                  "pm.test('Bio updated', () => pm.expect(bio).to.include('cineMate'));",
+                  "console.log('Verified username:', username, '| bio:', bio);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Target User Profile  (public)",
+          "id": "a0300010-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300010-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "console.log('Target profile:', JSON.stringify(pm.response.json()));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "profile"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Social Graph",
+      "id": "a0300011-0003-4003-8003-000000000001",
+      "item": [
+        {
+          "name": "Follow Target User",
+          "id": "a0300012-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300012-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "// 204 = followed; 409 = already following (safe to re-run)",
+                  "pm.test('Follow accepted or already following', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([204, 409]);",
+                  "});",
+                  "console.log('Follow status:', pm.response.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/follow",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "follow"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Check Is-Following  (primary → target)",
+          "id": "a0300013-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300013-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('is_following is true', () => pm.expect(json.is_following).to.be.true);",
+                  "console.log('is_following:', json.is_following);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/is-following?follower_id={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "is-following"],
+              "query": [{ "key": "follower_id", "value": "{{userId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Target's Followers",
+          "id": "a0300014-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300014-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns follower_ids array', () => pm.expect(json.follower_ids).to.be.an('array'));",
+                  "const primaryId = pm.collectionVariables.get('userId');",
+                  "pm.test('Primary user is in target followers', () => {",
+                  "  pm.expect(json.follower_ids).to.include(primaryId);",
+                  "});",
+                  "console.log('Target has', json.total, 'follower(s).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/followers?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "followers"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Primary User's Following",
+          "id": "a0300015-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300015-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns following_ids array', () => pm.expect(json.following_ids).to.be.an('array'));",
+                  "const targetId = pm.collectionVariables.get('targetUserId');",
+                  "pm.test('Target user is in primary following list', () => {",
+                  "  pm.expect(json.following_ids).to.include(targetId);",
+                  "});",
+                  "console.log('Primary follows', json.total, 'user(s).');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/following?limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "following"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unfollow Target User",
+          "id": "a0300016-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300016-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Unfollowed. Next check should confirm is_following = false.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/follow",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "follow"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Unfollowed  (is-following must be false)",
+          "id": "a0300017-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300017-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('is_following is false after unfollow', () => pm.expect(json.is_following).to.be.false);",
+                  "console.log('is_following after unfollow:', json.is_following);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{targetUserId}}/is-following?follower_id={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{targetUserId}}", "is-following"],
+              "query": [{ "key": "follower_id", "value": "{{userId}}" }]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Discovery",
+      "id": "a0300018-0003-4003-8003-000000000001",
+      "item": [
+        {
+          "name": "Search Users by Keyword",
+          "id": "a0300019-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300019-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns profiles array', () => pm.expect(json.profiles).to.be.an('array'));",
+                  "pm.test('Returns total count', () => pm.expect(json).to.have.property('total'));",
+                  "console.log('Search results for \"social\":', json.total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/search?q=social&limit=20&offset=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "search"],
+              "query": [
+                { "key": "q", "value": "social" },
+                { "key": "limit", "value": "20" },
+                { "key": "offset", "value": "0" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Search Users — missing q param must return 400",
+          "id": "a0300020-0003-4003-8003-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0300020-0003-4003-8003-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request when q is missing', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/search",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "search"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
