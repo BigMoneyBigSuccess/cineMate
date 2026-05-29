@@ -1,0 +1,414 @@
+{
+  "info": {
+    "_postman_id": "a0400000-0004-4004-8004-000000000001",
+    "name": "cineMate — Reviews Flow",
+    "description": "End-to-end test of the review (feedback) system.\n\nRun order:\n1. Auth       — Register + Login (saves {{token}} and {{userId}})\n2. Seed Movie — Upsert a deterministic test movie so we have a known {{reviewMovieId}}\n3. Reviews    — Submit a review; read it back by ID; list all user reviews; filter by movie;\n                update the review (upsert with same feedback_id); verify the update;\n                delete the review; verify it is gone",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",       "value": "http://localhost:8080", "type": "default" },
+    { "key": "token",         "value": "", "type": "default" },
+    { "key": "userId",        "value": "", "type": "default" },
+    { "key": "reviewMovieId", "value": "f1100000-0000-0000-0000-000000000001", "type": "default" },
+    { "key": "feedbackId",    "value": "", "type": "default" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "id": "a0400001-0004-4004-8004-000000000001",
+      "item": [
+        {
+          "name": "Register",
+          "id": "a0400002-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400002-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('userId', pm.response.json().user_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"reviews-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "id": "a0400003-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400003-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('userId', payload.user_id);",
+                  "console.log('userId from JWT:', payload.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"reviews-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Seed Movie",
+      "id": "a0400004-0004-4004-8004-000000000001",
+      "description": "Upserts a deterministic movie so folder 3 has a known movie_id to review. Safe to re-run.",
+      "item": [
+        {
+          "name": "Upsert Review Test Movie",
+          "id": "a0400005-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400005-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Review test movie ready, ID:', pm.collectionVariables.get('reviewMovieId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"f1100000-0000-0000-0000-000000000001\",\n  \"title\": \"Phantom Signal\",\n  \"description\": \"A radio astronomer intercepts a signal that may end humanity — or save it.\",\n  \"genres\": [\n    { \"id\": \"f2200000-0000-0000-0000-000000000001\", \"name\": \"Sci-Fi\" },\n    { \"id\": \"f2200000-0000-0000-0000-000000000002\", \"name\": \"Mystery\" }\n  ],\n  \"actors\": [\n    { \"id\": \"f3300000-0000-0000-0000-000000000001\", \"name\": \"Nora\", \"surname\": \"Hale\", \"birth_year\": 1991 }\n  ],\n  \"directors\": [\n    { \"id\": \"f4400000-0000-0000-0000-000000000001\", \"name\": \"Kai\", \"surname\": \"Ito\", \"birth_year\": 1968 }\n  ],\n  \"country\": \"Japan\",\n  \"release_year\": 2023,\n  \"imdb_rating\": 8.2\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "admin", "movies"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Reviews",
+      "id": "a0400006-0004-4004-8004-000000000001",
+      "item": [
+        {
+          "name": "Submit Review  (rating 8/10 with title and content)",
+          "id": "a0400007-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400007-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('feedbackId', json.feedback_id);",
+                  "console.log('Review submitted, feedbackId:', json.feedback_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 8,\n  \"title\": \"Quietly brilliant\",\n  \"content\": \"Phantom Signal keeps you guessing from the first transmission to the final frame.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/{{reviewMovieId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies", "{{reviewMovieId}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Review by ID",
+          "id": "a0400008-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400008-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('feedback_id matches', () => {",
+                  "  const id = json.feedback_id || json.FeedbackId || json.id;",
+                  "  pm.expect(id).to.eql(pm.collectionVariables.get('feedbackId'));",
+                  "});",
+                  "pm.test('Rating is 8', () => {",
+                  "  const rating = json.rating || json.Rating;",
+                  "  pm.expect(rating).to.eql(8);",
+                  "});",
+                  "console.log('Review:', JSON.stringify(json));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews", "{{feedbackId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Reviews  (all movies)",
+          "id": "a0400009-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400009-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns reviews array', () => pm.expect(json.reviews).to.be.an('array'));",
+                  "pm.test('At least one review present', () => pm.expect(json.reviews.length).to.be.at.least(1));",
+                  "const fid = pm.collectionVariables.get('feedbackId');",
+                  "const found = json.reviews.some(r => (r.feedback_id || r.FeedbackId || r.id) === fid);",
+                  "pm.test('Submitted review appears in list', () => pm.expect(found).to.be.true);",
+                  "console.log('Total reviews for user:', json.total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter My Reviews by Movie",
+          "id": "a0400010-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400010-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns reviews array', () => pm.expect(json.reviews).to.be.an('array'));",
+                  "const movieId = pm.collectionVariables.get('reviewMovieId');",
+                  "pm.test('All returned reviews belong to this movie', () => {",
+                  "  json.reviews.forEach(r => {",
+                  "    const mid = r.movie_id || r.MovieId;",
+                  "    pm.expect(mid).to.eql(movieId);",
+                  "  });",
+                  "});",
+                  "console.log('Reviews for movie', movieId, ':', json.reviews.length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/reviews?movieId={{reviewMovieId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "users", "{{userId}}", "reviews"],
+              "query": [{ "key": "movieId", "value": "{{reviewMovieId}}" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Review  (raise rating to 10/10 via upsert)",
+          "id": "a0400011-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400011-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns same feedback_id', () => {",
+                  "  pm.expect(json.feedback_id).to.eql(pm.collectionVariables.get('feedbackId'));",
+                  "});",
+                  "console.log('Review updated, feedbackId:', json.feedback_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"feedback_id\": \"{{feedbackId}}\",\n  \"rating\": 10,\n  \"title\": \"A masterpiece\",\n  \"content\": \"Changed my mind — this is a 10/10. The ending alone earns it.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/{{reviewMovieId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "movies", "{{reviewMovieId}}", "reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Updated Rating  (GET by ID → rating must be 10)",
+          "id": "a0400012-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400012-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const rating = json.rating || json.Rating;",
+                  "pm.test('Rating updated to 10', () => pm.expect(rating).to.eql(10));",
+                  "const title = json.title || json.Title || '';",
+                  "pm.test('Title updated', () => pm.expect(title).to.include('masterpiece'));",
+                  "console.log('Updated review rating:', rating);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews", "{{feedbackId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Review",
+          "id": "a0400013-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400013-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Review deleted. Next request must return 404.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews", "{{feedbackId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Deleted  (GET must now return 404)",
+          "id": "a0400014-0004-4004-8004-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0400014-0004-4004-8004-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('404 Not Found after deletion', () => pm.response.to.have.status(404));",
+                  "console.log('Review is correctly gone.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/reviews/{{feedbackId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "reviews", "{{feedbackId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

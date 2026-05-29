@@ -1,0 +1,215 @@
+{
+  "info": {
+    "_postman_id": "a0100000-0001-4001-8001-000000000001",
+    "name": "cineMate — Auth Flow",
+    "description": "End-to-end test of the authentication service.\n\nRun order:\n1. Register      — creates a fresh test account (safe to re-run; 409 if exists)\n2. Login         — exchanges credentials for a JWT; saves {{token}} and {{userId}}\n3. Verify Active — confirms the token grants access to a protected route\n4. Logout        — revokes the JWT server-side\n5. Verify Revoked — same protected route must now return 401",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "default" },
+    { "key": "token",   "value": "", "type": "default" },
+    { "key": "userId",  "value": "", "type": "default" }
+  ],
+  "item": [
+    {
+      "name": "1. Register & Login",
+      "id": "a0100001-0001-4001-8001-000000000001",
+      "item": [
+        {
+          "name": "Register",
+          "id": "a0100002-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100002-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.test('Returns user_id', () => pm.expect(json).to.have.property('user_id'));",
+                  "  pm.collectionVariables.set('userId', json.user_id);",
+                  "  console.log('New user created, userId:', json.user_id);",
+                  "} else {",
+                  "  console.log('User already exists — userId will be decoded from JWT after Login');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"auth-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "id": "a0100003-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100003-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('userId', payload.user_id);",
+                  "console.log('userId from JWT:', payload.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"auth-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Access Control",
+      "id": "a0100004-0001-4001-8001-000000000001",
+      "item": [
+        {
+          "name": "Verify Active Token — access protected route",
+          "id": "a0100005-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100005-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK — token accepted', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json).to.have.property('movies'));",
+                  "console.log('Watchlist size:', (json.movies || []).length);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify No Token — must return 401",
+          "id": "a0100006-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100006-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized when no token supplied', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "id": "a0100007-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100007-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));",
+                  "console.log('Token revoked. Next request must return 401.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Revoked Token — same route must now return 401",
+          "id": "a0100008-0001-4001-8001-000000000001",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "a0100008-0001-4001-8001-000000000002",
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('401 Unauthorized after logout', () => pm.response.to.have.status(401));",
+                  "console.log('Token is correctly rejected after logout.');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/watchlist",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "watchlist"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
