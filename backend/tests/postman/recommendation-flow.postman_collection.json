@@ -1,0 +1,1940 @@
+{
+  "info": {
+    "_postman_id": "7d49ae0e-9ae7-4512-b736-5a09bf7bf8f5",
+    "name": "cineMate — Recommendation Flow",
+    "description": "End-to-end test that proves the recommendation engine learns from review ratings.\n\nRun order:\n1. Auth — Register + Login (saves {{token}} and {{userId}})\n2. Seed Movies — 7 movies the user will review + 4 extra unreviewed ones the engine can recommend\n3. Browse Movies — sanity-check the data\n4. Submit Reviews — Action/Sci-Fi rated high, Drama rated low\n5. Get Recommendations — 5 strategies; results should favour Action/Sci-Fi\n6. Interactions — click / dismiss a recommendation\n7. History — view and clear history",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "default"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId1",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId2",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId3",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId4",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId5",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId6",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "reviewId7",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "recommendationId",
+      "value": "",
+      "type": "default"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 201 = new user created; 409 = already exists (safe to continue)",
+                  "pm.test('Register succeeded or user already exists', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([201, 409]);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('userId', json.user_id);",
+                  "  console.log('New user created, userId:', json.user_id);",
+                  "} else {",
+                  "  console.log('User already exists — userId will be decoded from JWT after Login');",
+                  "}"
+                ],
+                "id": "bff9632e-f8fb-4b50-bca7-1660c3ae5051"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"reco-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          },
+          "id": "0d490bb0-962f-436a-92c6-1c8d28cb1ad5",
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns token', () => pm.expect(json).to.have.property('token'));",
+                  "pm.collectionVariables.set('token', json.token);",
+                  "",
+                  "// Decode JWT payload to extract user_id (claim key used by auth-service)",
+                  "const b64 = json.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');",
+                  "const payload = JSON.parse(atob(b64));",
+                  "pm.collectionVariables.set('userId', payload.user_id);",
+                  "console.log('userId from JWT:', payload.user_id);"
+                ],
+                "id": "af705198-f2f9-4f5d-93c7-2abfccb550e4"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"reco-tester@cinemate.local\",\n  \"password\": \"Test1234!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "id": "e4916e1c-abd7-44db-a35b-974a68633542",
+          "response": []
+        }
+      ],
+      "id": "4e2a60f3-f944-46f8-8fe4-85979bbd40b1"
+    },
+    {
+      "name": "2. Seed Movies (Admin)",
+      "description": "Creates 11 movies via admin upsert (idempotent — safe to re-run).\n\nMovies the user WILL review (7):\n  Iron Storm, Urban Siege, Battle Front  — Action\n  Void Protocol, Stellar Drift           — Sci-Fi\n  The Quiet Room, Long Shadows           — Drama\n\nMovies the user will NOT review (4 — these are what the engine recommends):\n  Strike Force, Black Horizon            — Action  (same director/actors as above)\n  Nexus, Gravity's Edge                  — Sci-Fi  (same director/actors as above)\n  Funny Business                         — Comedy  (neutral)\n\nAll movie_ids are fixed UUIDs so upserts are deterministic.",
+      "item": [
+        {
+          "name": "Iron Storm  [Action · Thriller]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "7f439385-9e55-4cda-8d82-a514ce298104"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a1100000-0000-0000-0000-000000000001\",\n  \"title\": \"Iron Storm\",\n  \"description\": \"An elite soldier must stop a rogue weapons program before it triggers a global conflict.\",\n  \"genres\": [\n    { \"id\": \"b1100000-0000-0000-0000-000000000001\", \"name\": \"Action\" },\n    { \"id\": \"b4400000-0000-0000-0000-000000000004\", \"name\": \"Thriller\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d1100000-0000-0000-0000-000000000001\", \"name\": \"Ryan\", \"surname\": \"Mercer\", \"birth_year\": 1980 },\n    { \"id\": \"d3300000-0000-0000-0000-000000000003\", \"name\": \"Alex\", \"surname\": \"Torres\", \"birth_year\": 1985 }\n  ],\n  \"directors\": [\n    { \"id\": \"c1100000-0000-0000-0000-000000000001\", \"name\": \"Marcus\", \"surname\": \"Cole\", \"birth_year\": 1970 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2022,\n  \"imdb_rating\": 8.1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "1e5a1f25-1ca9-4a8c-aaa4-08518827dcf2",
+          "response": []
+        },
+        {
+          "name": "Urban Siege  [Action · Crime]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "8338876e-47f3-4c73-8b20-d77e1a05e25d"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a1100000-0000-0000-0000-000000000002\",\n  \"title\": \"Urban Siege\",\n  \"description\": \"A seasoned detective infiltrates a crime syndicate that has taken over an entire city block.\",\n  \"genres\": [\n    { \"id\": \"b1100000-0000-0000-0000-000000000001\", \"name\": \"Action\" },\n    { \"id\": \"b6600000-0000-0000-0000-000000000006\", \"name\": \"Crime\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d1100000-0000-0000-0000-000000000001\", \"name\": \"Ryan\", \"surname\": \"Mercer\", \"birth_year\": 1980 },\n    { \"id\": \"d3300000-0000-0000-0000-000000000003\", \"name\": \"Alex\", \"surname\": \"Torres\", \"birth_year\": 1985 }\n  ],\n  \"directors\": [\n    { \"id\": \"c1100000-0000-0000-0000-000000000001\", \"name\": \"Marcus\", \"surname\": \"Cole\", \"birth_year\": 1970 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2021,\n  \"imdb_rating\": 7.8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "835e9347-1276-43b7-9756-94dafddb81d9",
+          "response": []
+        },
+        {
+          "name": "Battle Front  [Action · War]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "bb06417c-c076-468f-b6d7-3754a59399e6"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a1100000-0000-0000-0000-000000000003\",\n  \"title\": \"Battle Front\",\n  \"description\": \"A special forces unit behind enemy lines must complete one final mission to end a decade-long war.\",\n  \"genres\": [\n    { \"id\": \"b1100000-0000-0000-0000-000000000001\", \"name\": \"Action\" },\n    { \"id\": \"b8800000-0000-0000-0000-000000000008\", \"name\": \"War\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d4400000-0000-0000-0000-000000000004\", \"name\": \"Nathan\", \"surname\": \"Blake\", \"birth_year\": 1978 }\n  ],\n  \"directors\": [\n    { \"id\": \"c1100000-0000-0000-0000-000000000001\", \"name\": \"Marcus\", \"surname\": \"Cole\", \"birth_year\": 1970 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2020,\n  \"imdb_rating\": 7.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "0d298146-7762-4f6b-b371-d215422f8e8f",
+          "response": []
+        },
+        {
+          "name": "Void Protocol  [Sci-Fi · Thriller]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "22a60e12-60ad-4d83-a7a1-2fea0796ebe0"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a2200000-0000-0000-0000-000000000001\",\n  \"title\": \"Void Protocol\",\n  \"description\": \"A scientist discovers reality is a simulation and must prevent its administrators from initiating a reset.\",\n  \"genres\": [\n    { \"id\": \"b2200000-0000-0000-0000-000000000002\", \"name\": \"Sci-Fi\" },\n    { \"id\": \"b4400000-0000-0000-0000-000000000004\", \"name\": \"Thriller\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d2200000-0000-0000-0000-000000000002\", \"name\": \"Sophia\", \"surname\": \"Kane\",   \"birth_year\": 1990 },\n    { \"id\": \"d5500000-0000-0000-0000-000000000005\", \"name\": \"Leo\",    \"surname\": \"Strand\", \"birth_year\": 1983 }\n  ],\n  \"directors\": [\n    { \"id\": \"c2200000-0000-0000-0000-000000000002\", \"name\": \"Elena\", \"surname\": \"Vasquez\", \"birth_year\": 1975 }\n  ],\n  \"country\": \"UK\",\n  \"release_year\": 2023,\n  \"imdb_rating\": 8.4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "0178477a-2675-4b49-a44a-932b3bbc8616",
+          "response": []
+        },
+        {
+          "name": "Stellar Drift  [Sci-Fi · Adventure]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "ea52a8f5-4ac2-4f2e-993e-4c9cde7bfe18"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a2200000-0000-0000-0000-000000000002\",\n  \"title\": \"Stellar Drift\",\n  \"description\": \"A crew of explorers drifts off-course and encounters a civilisation untouched by humanity for ten thousand years.\",\n  \"genres\": [\n    { \"id\": \"b2200000-0000-0000-0000-000000000002\", \"name\": \"Sci-Fi\" },\n    { \"id\": \"b7700000-0000-0000-0000-000000000007\", \"name\": \"Adventure\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d2200000-0000-0000-0000-000000000002\", \"name\": \"Sophia\", \"surname\": \"Kane\",   \"birth_year\": 1990 },\n    { \"id\": \"d6600000-0000-0000-0000-000000000006\", \"name\": \"Omar\",   \"surname\": \"Khalid\", \"birth_year\": 1987 }\n  ],\n  \"directors\": [\n    { \"id\": \"c2200000-0000-0000-0000-000000000002\", \"name\": \"Elena\", \"surname\": \"Vasquez\", \"birth_year\": 1975 }\n  ],\n  \"country\": \"UK\",\n  \"release_year\": 2022,\n  \"imdb_rating\": 7.9\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "cf10cdc7-5d6d-4d1e-9ce7-bb69c2b68492",
+          "response": []
+        },
+        {
+          "name": "The Quiet Room  [Drama · Romance]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "8d7686c2-3c13-4fcc-88cf-698af00ee094"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a3300000-0000-0000-0000-000000000001\",\n  \"title\": \"The Quiet Room\",\n  \"description\": \"Two strangers stranded at an airport over Christmas find unexpected connection in a single afternoon.\",\n  \"genres\": [\n    { \"id\": \"b3300000-0000-0000-0000-000000000003\", \"name\": \"Drama\" },\n    { \"id\": \"b9900000-0000-0000-0000-000000000009\", \"name\": \"Romance\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d7700000-0000-0000-0000-000000000007\", \"name\": \"Claire\", \"surname\": \"Fontaine\", \"birth_year\": 1992 }\n  ],\n  \"directors\": [\n    { \"id\": \"c3300000-0000-0000-0000-000000000003\", \"name\": \"James\", \"surname\": \"Fairfax\", \"birth_year\": 1965 }\n  ],\n  \"country\": \"France\",\n  \"release_year\": 2019,\n  \"imdb_rating\": 6.8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "d65a4c86-ec3d-46df-be14-d516eaa1c5d1",
+          "response": []
+        },
+        {
+          "name": "Long Shadows  [Drama]  ← will be reviewed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "c32756fb-a92e-490e-a4e5-8e31c0f89da2"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a3300000-0000-0000-0000-000000000002\",\n  \"title\": \"Long Shadows\",\n  \"description\": \"A retired judge returns to his hometown and must confront the consequences of a verdict he gave thirty years ago.\",\n  \"genres\": [\n    { \"id\": \"b3300000-0000-0000-0000-000000000003\", \"name\": \"Drama\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d8800000-0000-0000-0000-000000000008\", \"name\": \"Gerald\", \"surname\": \"Holt\", \"birth_year\": 1955 }\n  ],\n  \"directors\": [\n    { \"id\": \"c3300000-0000-0000-0000-000000000003\", \"name\": \"James\", \"surname\": \"Fairfax\", \"birth_year\": 1965 }\n  ],\n  \"country\": \"UK\",\n  \"release_year\": 2018,\n  \"imdb_rating\": 7.1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "8ed2828e-5cda-4419-bc2d-99de79ea0482",
+          "response": []
+        },
+        {
+          "name": "Strike Force  [Action]  ← NOT reviewed (recommendation target)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "00f65482-b8af-4d3f-970e-f56c0e31882d"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a1100000-0000-0000-0000-000000000004\",\n  \"title\": \"Strike Force\",\n  \"description\": \"A covert unit races to dismantle a terror network before it strikes three capital cities simultaneously.\",\n  \"genres\": [\n    { \"id\": \"b1100000-0000-0000-0000-000000000001\", \"name\": \"Action\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d1100000-0000-0000-0000-000000000001\", \"name\": \"Ryan\", \"surname\": \"Mercer\", \"birth_year\": 1980 }\n  ],\n  \"directors\": [\n    { \"id\": \"c1100000-0000-0000-0000-000000000001\", \"name\": \"Marcus\", \"surname\": \"Cole\", \"birth_year\": 1970 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2024,\n  \"imdb_rating\": 7.6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "a6fb1207-6139-4836-ac40-1c47c30c16e0",
+          "response": []
+        },
+        {
+          "name": "Black Horizon  [Action · Thriller]  ← NOT reviewed (recommendation target)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "50a63965-cdba-43e0-a5f3-297cdf4e4564"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a1100000-0000-0000-0000-000000000005\",\n  \"title\": \"Black Horizon\",\n  \"description\": \"An undercover operative discovers the conspiracy goes all the way to the top.\",\n  \"genres\": [\n    { \"id\": \"b1100000-0000-0000-0000-000000000001\", \"name\": \"Action\" },\n    { \"id\": \"b4400000-0000-0000-0000-000000000004\", \"name\": \"Thriller\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d3300000-0000-0000-0000-000000000003\", \"name\": \"Alex\", \"surname\": \"Torres\", \"birth_year\": 1985 }\n  ],\n  \"directors\": [\n    { \"id\": \"c1100000-0000-0000-0000-000000000001\", \"name\": \"Marcus\", \"surname\": \"Cole\", \"birth_year\": 1970 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2023,\n  \"imdb_rating\": 7.3\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "13d1eb09-c8cd-442c-927c-bc1f48cfdf19",
+          "response": []
+        },
+        {
+          "name": "Nexus  [Sci-Fi]  ← NOT reviewed (recommendation target)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "b393c389-5e0e-4dd0-bb23-e43113463a72"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a2200000-0000-0000-0000-000000000003\",\n  \"title\": \"Nexus\",\n  \"description\": \"A lone engineer must restart a dormant AI before it erases every digital record of human civilisation.\",\n  \"genres\": [\n    { \"id\": \"b2200000-0000-0000-0000-000000000002\", \"name\": \"Sci-Fi\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d2200000-0000-0000-0000-000000000002\", \"name\": \"Sophia\", \"surname\": \"Kane\", \"birth_year\": 1990 }\n  ],\n  \"directors\": [\n    { \"id\": \"c2200000-0000-0000-0000-000000000002\", \"name\": \"Elena\", \"surname\": \"Vasquez\", \"birth_year\": 1975 }\n  ],\n  \"country\": \"UK\",\n  \"release_year\": 2024,\n  \"imdb_rating\": 8.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "0b897bbc-7d9b-4359-a678-8ec700873f99",
+          "response": []
+        },
+        {
+          "name": "Gravity's Edge  [Sci-Fi · Adventure]  ← NOT reviewed (recommendation target)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "f9d60d60-9fb3-42da-95ce-929edbd00143"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a2200000-0000-0000-0000-000000000004\",\n  \"title\": \"Gravity's Edge\",\n  \"description\": \"Two rival pilots are stranded together at the edge of the solar system with one ship and one suit.\",\n  \"genres\": [\n    { \"id\": \"b2200000-0000-0000-0000-000000000002\", \"name\": \"Sci-Fi\" },\n    { \"id\": \"b7700000-0000-0000-0000-000000000007\", \"name\": \"Adventure\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d2200000-0000-0000-0000-000000000002\", \"name\": \"Sophia\", \"surname\": \"Kane\",   \"birth_year\": 1990 },\n    { \"id\": \"d6600000-0000-0000-0000-000000000006\", \"name\": \"Omar\",   \"surname\": \"Khalid\", \"birth_year\": 1987 }\n  ],\n  \"directors\": [\n    { \"id\": \"c2200000-0000-0000-0000-000000000002\", \"name\": \"Elena\", \"surname\": \"Vasquez\", \"birth_year\": 1975 }\n  ],\n  \"country\": \"UK\",\n  \"release_year\": 2025,\n  \"imdb_rating\": 7.7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "85389a31-7bfb-47e8-91d4-b1aa37f0ec90",
+          "response": []
+        },
+        {
+          "name": "Funny Business  [Comedy]  ← NOT reviewed (neutral)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "c2de0568-2efd-4286-9d2a-d930f6e1d1f3"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"movie_id\": \"a4400000-0000-0000-0000-000000000001\",\n  \"title\": \"Funny Business\",\n  \"description\": \"A bumbling accountant accidentally becomes the CEO of a Fortune 500 company for one week.\",\n  \"genres\": [\n    { \"id\": \"b5500000-0000-0000-0000-000000000005\", \"name\": \"Comedy\" }\n  ],\n  \"actors\": [\n    { \"id\": \"d9900000-0000-0000-0000-000000000009\", \"name\": \"Pete\", \"surname\": \"Lawson\", \"birth_year\": 1988 }\n  ],\n  \"directors\": [\n    { \"id\": \"c4400000-0000-0000-0000-000000000004\", \"name\": \"Diana\", \"surname\": \"Park\", \"birth_year\": 1980 }\n  ],\n  \"country\": \"USA\",\n  \"release_year\": 2023,\n  \"imdb_rating\": 6.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/movies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "movies"
+              ]
+            }
+          },
+          "id": "4c452db8-c08c-4bf5-bf40-eab3cf7506e4",
+          "response": []
+        }
+      ],
+      "id": "707abcde-ca40-44fc-9c94-8ae4c1824561"
+    },
+    {
+      "name": "3. Browse Movies",
+      "item": [
+        {
+          "name": "List All Movies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns movies array', () => pm.expect(json).to.have.property('movies').that.is.an('array'));",
+                  "pm.test('At least 12 movies seeded', () => pm.expect(json.movies.length).to.be.at.least(12));",
+                  "console.log('Total movies in DB:', json.movies.length);"
+                ],
+                "id": "96cd1018-0dbd-4318-b4c7-28639920b7fc"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies?limit=50&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          },
+          "id": "a92aceee-88c4-46fc-8269-114b9d5a9a8e",
+          "response": []
+        },
+        {
+          "name": "Get Movie by ID  [Iron Storm]",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Correct title', () => pm.expect(json.title).to.eql('Iron Storm'));",
+                  "const genres = (json.genres || []).map(g => g.name).join(', ');",
+                  "console.log('Iron Storm genres:', genres);"
+                ],
+                "id": "76563603-7a8a-4d4b-9484-ab67c6c1498d"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a1100000-0000-0000-0000-000000000001",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a1100000-0000-0000-0000-000000000001"
+              ]
+            }
+          },
+          "id": "72900ce2-efa1-4797-a6a3-bf3b1d70a20c",
+          "response": []
+        }
+      ],
+      "id": "b42be5c1-53ca-418e-8231-066759efb9df"
+    },
+    {
+      "name": "4. Submit Reviews  (signal preferences)",
+      "description": "Rates 7 movies by rating alone — the recommendation engine only uses the numeric rating, not review text.\n\n  Action movies  → 4-5★  (strong like)\n  Sci-Fi movies  → 4-5★  (strong like)\n  Drama movies   → 1-2★  (dislike)\n\n  Unreviewed movies (Strike Force, Black Horizon, Nexus, Gravity's Edge)\n  share the same genres/actors/directors as the reviewed ones, so they\n  are the expected candidates in folder 5.",
+      "item": [
+        {
+          "name": "Rate Iron Storm  9/10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId1', json.feedback_id);"
+                ],
+                "id": "0660ebbd-333b-41c7-8c10-bfa9fd1e3f1b"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 9 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a1100000-0000-0000-0000-000000000001/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a1100000-0000-0000-0000-000000000001",
+                "reviews"
+              ]
+            }
+          },
+          "id": "887a9c02-38f4-4d22-87b7-7098edc577e1",
+          "response": []
+        },
+        {
+          "name": "Rate Urban Siege  10/10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId2', json.feedback_id);"
+                ],
+                "id": "5d25e08a-2fe8-412e-a7b3-f599a3bd94ac"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 10 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a1100000-0000-0000-0000-000000000002/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a1100000-0000-0000-0000-000000000002",
+                "reviews"
+              ]
+            }
+          },
+          "id": "8b87f459-108f-4a98-ae4b-f4a334fd9356",
+          "response": []
+        },
+        {
+          "name": "Rate Battle Front  8/10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId3', json.feedback_id);"
+                ],
+                "id": "42079309-dc65-4538-846d-ebf7fd79f8cc"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 8 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a1100000-0000-0000-0000-000000000003/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a1100000-0000-0000-0000-000000000003",
+                "reviews"
+              ]
+            }
+          },
+          "id": "b470f31f-2bc3-4250-8195-71b2bb771cae",
+          "response": []
+        },
+        {
+          "name": "Rate Void Protocol  10/10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId4', json.feedback_id);"
+                ],
+                "id": "132c580b-9cbd-4dab-82c6-b4afed9f2b32"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 10 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a2200000-0000-0000-0000-000000000001/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a2200000-0000-0000-0000-000000000001",
+                "reviews"
+              ]
+            }
+          },
+          "id": "73103cd2-5c2a-4366-b0dd-8066ddd05f4c",
+          "response": []
+        },
+        {
+          "name": "Rate Stellar Drift  8/10",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId5', json.feedback_id);"
+                ],
+                "id": "d3cd825a-99e1-4818-ac06-8d54a553b6e1"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 8 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a2200000-0000-0000-0000-000000000002/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a2200000-0000-0000-0000-000000000002",
+                "reviews"
+              ]
+            }
+          },
+          "id": "20af98a3-b846-4abe-988c-02ab337e40fb",
+          "response": []
+        },
+        {
+          "name": "Rate The Quiet Room  3/10  (drama — dislike signal)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId6', json.feedback_id);"
+                ],
+                "id": "5dfbb25d-1daa-46c0-a953-1e68a318ddaf"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 3 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a3300000-0000-0000-0000-000000000001/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a3300000-0000-0000-0000-000000000001",
+                "reviews"
+              ]
+            }
+          },
+          "id": "5a5e6931-cef6-4a38-a884-e68b8815a076",
+          "response": []
+        },
+        {
+          "name": "Rate Long Shadows  2/10  (drama — strong dislike signal)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('Returns feedback_id', () => pm.expect(json).to.have.property('feedback_id'));",
+                  "pm.collectionVariables.set('reviewId7', json.feedback_id);"
+                ],
+                "id": "1afef2e1-7817-4feb-8392-b4af942187e3"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"rating\": 2 }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/movies/a3300000-0000-0000-0000-000000000002/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "movies",
+                "a3300000-0000-0000-0000-000000000002",
+                "reviews"
+              ]
+            }
+          },
+          "id": "5718eb21-6383-4817-b3ba-3622f12e818a",
+          "response": []
+        },
+        {
+          "name": "Verify — list my reviews",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const reviews = json.reviews || [];",
+                  "pm.test('At least 7 reviews submitted', () => pm.expect(reviews.length).to.be.at.least(7));",
+                  "const ratings = reviews.map(r => r.rating).join(', ');",
+                  "console.log('My ratings:', ratings);"
+                ],
+                "id": "07f09fa3-a5ea-46d0-a403-b9c05ef17d61"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/{{userId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "{{userId}}",
+                "reviews"
+              ]
+            }
+          },
+          "id": "3e5a484d-73d9-470d-94fa-038056bd3182",
+          "response": []
+        }
+      ],
+      "id": "217e0fa0-fc8b-4b89-8026-466dbbe4aca7"
+    },
+    {
+      "name": "5. Get Recommendations",
+      "description": "What to expect after the reviews above:\n  genres_based    → Strike Force, Black Horizon, Nexus, Gravity's Edge  (Action/Sci-Fi)\n  actors_based    → movies with Ryan Mercer, Alex Torres, or Sophia Kane\n  directors_based → movies by Marcus Cole or Elena Vasquez\n  profile_based   → weighted mix of the above\n  ai_model_based  → requires OPENROUTER_API_KEY in .env (skipped gracefully if missing)",
+      "item": [
+        {
+          "name": "Preference Profile Based  (default)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "id": "pre-profile-clear",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/v1/recommendations/history',",
+                  "  method: 'DELETE',",
+                  "  header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') }]",
+                  "}, (err, res) => console.log('History cleared before preference_profile_based, status:', res ? res.code : err));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const recs = json.recommendations || [];",
+                  "pm.test('At least one recommendation returned', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "",
+                  "if (recs.length > 0) {",
+                  "  pm.collectionVariables.set('recommendationId', recs[0].recommendation_id);",
+                  "}",
+                  "",
+                  "const likedGenres = new Set(['Action', 'Sci-Fi', 'Thriller', 'Crime', 'War', 'Adventure']);",
+                  "const lines = recs.map((r, i) => {",
+                  "  const genres = (r.movie.genres || []).map(g => g.name).join(', ');",
+                  "  const hit = (r.movie.genres || []).some(g => likedGenres.has(g.name)) ? '✓' : '✗';",
+                  "  return `  ${hit} #${r.rank || i+1}  ${r.movie.title}  [${genres}]`;",
+                  "});",
+                  "console.log('Profile-based results:\\n' + lines.join('\\n'));",
+                  "",
+                  "const onTarget = recs.filter(r => (r.movie.genres || []).some(g => likedGenres.has(g.name)));",
+                  "console.log(`On-target: ${onTarget.length} / ${recs.length}`);"
+                ],
+                "id": "77f29884-10e7-464d-a487-a0f387fd60e6"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?strategy=preference_profile_based&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "preference_profile_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "3c0b9c11-f5a3-42e3-98c8-79086c23c280",
+          "response": []
+        },
+        {
+          "name": "Genres Based",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "id": "pre-genres-clear",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/v1/recommendations/history',",
+                  "  method: 'DELETE',",
+                  "  header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') }]",
+                  "}, (err, res) => console.log('History cleared before genres_based, status:', res ? res.code : err));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const recs = json.recommendations || [];",
+                  "pm.test('At least one recommendation returned', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "",
+                  "const likedGenres = new Set(['Action', 'Sci-Fi', 'Thriller', 'Crime', 'War', 'Adventure']);",
+                  "const lines = recs.map(r => {",
+                  "  const genres = (r.movie.genres || []).map(g => g.name).join(', ');",
+                  "  const hit = (r.movie.genres || []).some(g => likedGenres.has(g.name)) ? '✓' : '✗';",
+                  "  return `  ${hit}  ${r.movie.title}  [${genres}]`;",
+                  "});",
+                  "console.log('Genres-based results:\\n' + lines.join('\\n'));"
+                ],
+                "id": "9a50787b-5c30-4d96-bd73-31d820450abc"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?strategy=genres_based&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "genres_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "462a826f-1c73-408a-bb96-706dbef3f71c",
+          "response": []
+        },
+        {
+          "name": "Actors Based",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "id": "pre-actors-clear",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/v1/recommendations/history',",
+                  "  method: 'DELETE',",
+                  "  header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') }]",
+                  "}, (err, res) => console.log('History cleared before actors_based, status:', res ? res.code : err));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const recs = json.recommendations || [];",
+                  "pm.test('At least one recommendation returned', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "",
+                  "const lines = recs.map(r => {",
+                  "  const cast = (r.movie.actors || []).map(a => `${a.name} ${a.surname}`).join(', ');",
+                  "  return `  ${r.movie.title}  [${cast || 'no cast'}]`;",
+                  "});",
+                  "console.log('Actors-based results:\\n' + lines.join('\\n'));"
+                ],
+                "id": "f7b954a4-51f3-4b6e-b7a4-e918770fa23b"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?strategy=actors_based&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "actors_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "fb04f9a7-101e-4563-b603-655889c2d2dd",
+          "response": []
+        },
+        {
+          "name": "Directors Based",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "id": "pre-directors-clear",
+                "exec": [
+                  "pm.sendRequest({",
+                  "  url: pm.collectionVariables.get('baseUrl') + '/api/v1/recommendations/history',",
+                  "  method: 'DELETE',",
+                  "  header: [{ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('token') }]",
+                  "}, (err, res) => console.log('History cleared before directors_based, status:', res ? res.code : err));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "const recs = json.recommendations || [];",
+                  "pm.test('At least one recommendation returned', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "",
+                  "const lines = recs.map(r => {",
+                  "  const dirs = (r.movie.directors || []).map(d => `${d.name} ${d.surname}`).join(', ');",
+                  "  return `  ${r.movie.title}  [dir. ${dirs || 'unknown'}]`;",
+                  "});",
+                  "console.log('Directors-based results:\\n' + lines.join('\\n'));"
+                ],
+                "id": "93f0981a-b73b-48f8-8758-1c3200e95d63"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?strategy=directors_based&limit=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "directors_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "id": "6471e49f-bb80-4b05-8b7c-1216d719646c",
+          "response": []
+        },
+        {
+          "name": "AI Model Based  (requires OPENROUTER_API_KEY)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const recs = pm.response.json().recommendations || [];",
+                  "  pm.test('At least one AI recommendation', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "  if (recs[0] && recs[0].ai_response) {",
+                  "    console.log('AI explanation:', recs[0].ai_response.substring(0, 200));",
+                  "  }",
+                  "} else {",
+                  "  console.warn('AI strategy returned HTTP', pm.response.code, '— set OPENROUTER_API_KEY in .env to enable this strategy');",
+                  "}"
+                ],
+                "id": "468962a4-ab5b-475a-9eb0-e0e363ba3701"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations?strategy=ai_model_based&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "ai_model_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "id": "1ca61a35-bd05-471d-a2db-f7eed07d2a68",
+          "response": []
+        }
+      ],
+      "id": "8210608e-467c-41b2-89cc-438a6a79ea12"
+    },
+    {
+      "name": "6. Interactions",
+      "description": "Record user behaviour on a recommendation. Uses {{recommendationId}} saved by folder 5.",
+      "item": [
+        {
+          "name": "Click on Recommendation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "59de789a-d517-4aec-b393-52069de5b618"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"interaction\": \"click\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/{{recommendationId}}/interactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "{{recommendationId}}",
+                "interactions"
+              ]
+            }
+          },
+          "id": "ebe2dd57-f4dd-4045-ab19-f711539b9a05",
+          "response": []
+        },
+        {
+          "name": "Dismiss a Recommendation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "d8c0812a-ed59-4700-8038-19ab35780531"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"interaction\": \"dismiss\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/{{recommendationId}}/interactions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "{{recommendationId}}",
+                "interactions"
+              ]
+            }
+          },
+          "id": "a4b7bc71-2e38-4fe8-a7c1-541fe6bbdeaa",
+          "response": []
+        }
+      ],
+      "id": "694989af-19cc-49d9-a65b-8fb66584a68a"
+    },
+    {
+      "name": "7. Recommendation History",
+      "description": "The history endpoint requires a strategy parameter — passing an empty string returns 400.",
+      "item": [
+        {
+          "name": "Get History  (directors_based)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const recs = pm.response.json().recommendations || [];",
+                  "pm.test('History has directors_based entries', () => pm.expect(recs.length).to.be.at.least(1));",
+                  "pm.test('All entries are directors_based', () =>",
+                  "  pm.expect(recs.every(r => r.strategy === 'directors_based')).to.be.true",
+                  ");",
+                  "console.log('directors_based history entries:', recs.length);"
+                ],
+                "id": "b12224eb-2e86-4655-9e22-f128ced5f0f7"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/history?strategy=directors_based&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "directors_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "id": "2dd37cf2-ae2c-4098-a2e3-fbb2ebd02487",
+          "response": []
+        },
+        {
+          "name": "Clear History",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204 No Content', () => pm.response.to.have.status(204));"
+                ],
+                "id": "372e444f-44ce-4717-9914-1e2836963ea5"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "history"
+              ]
+            }
+          },
+          "id": "0cbaa5d8-1eac-4e7b-9744-59aed5f4f353",
+          "response": []
+        },
+        {
+          "name": "Verify History Empty after Clear",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const recs = pm.response.json().recommendations || [];",
+                  "pm.test('History is empty', () => pm.expect(recs.length).to.eql(0));",
+                  "console.log('History cleared successfully.');"
+                ],
+                "id": "2a9e484f-2978-49de-9ac8-de1335940693"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/recommendations/history?strategy=preference_profile_based&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "recommendations",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "strategy",
+                  "value": "preference_profile_based"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "id": "11c94d7b-0501-49a2-9e1c-f157e06af4ad",
+          "response": []
+        }
+      ],
+      "id": "9d966064-12dd-4ebb-b09b-f4cb090db0b2"
+    }
+  ]
+}
