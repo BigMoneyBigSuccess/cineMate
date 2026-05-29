@@ -68,9 +68,9 @@ func mapFilmToMovie(item FilmItem, detail *FilmDetail, staff []StaffMember) doma
 // parsePerson splits a staff member's full name into Name and Surname.
 // Returns false if the name is empty (member will be skipped).
 func parsePerson(member StaffMember) (domain.Person, bool) {
-	fullName := strings.TrimSpace(member.NameEn)
+	fullName := strings.TrimSpace(member.NameRu)
 	if fullName == "" {
-		fullName = strings.TrimSpace(member.NameRu)
+		fullName = strings.TrimSpace(member.NameEn)
 	}
 	if fullName == "" {
 		return domain.Person{}, false
