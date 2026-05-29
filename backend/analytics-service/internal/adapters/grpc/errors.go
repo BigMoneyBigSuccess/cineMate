@@ -21,7 +21,8 @@ func domainErr(err error) error {
 		errors.Is(err, domain.ErrInvalidMovieSnapshot),
 		errors.Is(err, domain.ErrInvalidUserReference):
 		return status.Error(codes.InvalidArgument, err.Error())
-	case errors.Is(err, domain.ErrInvalidMovieReference):
+	case errors.Is(err, domain.ErrInvalidMovieReference),
+		errors.Is(err, domain.ErrFeedbackNotFound):
 		return status.Error(codes.NotFound, err.Error())
 	default:
 		return status.Error(codes.Internal, err.Error())

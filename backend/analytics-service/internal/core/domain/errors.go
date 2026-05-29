@@ -13,4 +13,5 @@ var (
 	ErrInvalidRecommendationInteraction = errors.New("invalid recommendation interaction")
 	ErrInvalidGenre                     = errors.New("invalid genre")
 	ErrInvalidPerson                    = errors.New("invalid person")
+	ErrFeedbackNotFound                 = errors.New("feedback not found")
 )
