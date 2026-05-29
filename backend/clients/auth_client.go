@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type AuthClient struct {
@@ -55,6 +56,7 @@ func (c *AuthClient) Login(ctx context.Context, email, password string) (string,
 }
 
 func (c *AuthClient) Logout(ctx context.Context, token string) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+token)
 	_, err := c.client.Logout(ctx, &authv1.LogoutRequest{Token: token})
 	return err
 }
