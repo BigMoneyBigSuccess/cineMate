@@ -90,7 +90,7 @@ func (r *FeedbackRepository) GetFeedbackByID(ctx context.Context, feedbackID uui
 		&f.Rating, &f.Title, &f.Content,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return domain.MovieFeedback{}, domain.ErrInvalidMovieFeedback
+		return domain.MovieFeedback{}, domain.ErrFeedbackNotFound
 	}
 	if err != nil {
 		return domain.MovieFeedback{}, fmt.Errorf("get feedback by id: %w", err)
