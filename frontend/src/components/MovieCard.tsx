@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BookmarkPlus, Info, Star, X } from 'lucide-react';
+import { BookmarkPlus, Info, Search, Star, X } from 'lucide-react';
 import type { Movie } from '../types/domain';
 import { movieGenres, moviePeople, personName } from '../utils/movie';
 import RatingControl from './RatingControl';
@@ -24,6 +24,7 @@ export default function MovieCard({
   const genres = movieGenres(movie);
   const actors = movie.actors.map(personName).filter(Boolean).join(', ');
   const directors = movie.directors.map(personName).filter(Boolean).join(', ');
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${movie.title} смотреть онлайн бесплатно в HD качестве`)}`;
 
   useEffect(() => {
     if (!detailsOpen) {
@@ -133,14 +134,20 @@ export default function MovieCard({
                 <span>{actors || 'Нет данных'}</span>
               </div>
               <div className="movie-modal-actions">
-                <button
-                  className={inWatchlist ? 'action-button action-button-active' : 'action-button'}
-                  type="button"
-                  onClick={() => onToggleWatchlist?.(movie)}
-                >
-                  <BookmarkPlus size={16} />
-                  <span>Интересно</span>
-                </button>
+                <div className="movie-modal-buttons">
+                  <button
+                    className={inWatchlist ? 'action-button action-button-active' : 'action-button'}
+                    type="button"
+                    onClick={() => onToggleWatchlist?.(movie)}
+                  >
+                    <BookmarkPlus size={16} />
+                    <span>Интересно</span>
+                  </button>
+                  <a className="action-button" href={searchUrl} target="_blank" rel="noreferrer">
+                    <Search size={16} />
+                    <span>Найти</span>
+                  </a>
+                </div>
                 <div className="movie-modal-rating">
                   <span>Ваша оценка</span>
                   <RatingControl value={rating} onChange={(next) => onRate?.(movie, next)} />
