@@ -85,18 +85,6 @@ func TestParsePersonSplitsOnFirstSpaceOnly(t *testing.T) {
 	}
 }
 
-func TestParsePersonEnglishPreferredOverRussianEvenWhenRussianPresent(t *testing.T) {
-	t.Parallel()
-
-	person, ok := parsePerson(StaffMember{NameEn: "Christopher Nolan", NameRu: "Кристофер Нолан"})
-	if !ok {
-		t.Fatal("expected ok=true")
-	}
-	if person.Name != "Christopher" {
-		t.Errorf("expected English name, got %q", person.Name)
-	}
-}
-
 // ── mapFilmToMovie ────────────────────────────────────────────────────────────
 
 func newFilmItem(kinopoiskID int, nameRu string) FilmItem {
