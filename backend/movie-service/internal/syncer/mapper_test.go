@@ -21,7 +21,7 @@ func TestParsePersonPrefersRussianName(t *testing.T) {
 func TestParsePersonFallsBackToEnglishName(t *testing.T) {
 	t.Parallel()
 
-	person, ok := parsePerson(StaffMember{NameEn: "Andrey Tarkovskiy", NameRu: "Андрей Тарковский"})
+	person, ok := parsePerson(StaffMember{NameEn: "Andrey Tarkovskiy", NameRu: ""})
 	if !ok {
 		t.Fatal("expected ok=true")
 	}
